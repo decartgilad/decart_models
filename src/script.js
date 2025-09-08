@@ -36,7 +36,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            e.preventDefault();
+            // Only prevent default for anchor links (#)
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+            }
             
             // Remove active class from all items
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -51,6 +54,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add your navigation logic here
             console.log('Navigation clicked:', this.textContent);
+            
+            // Allow normal navigation for real links
+            if (this.getAttribute('href') !== '#') {
+                // Let the browser handle the navigation naturally
+                return true;
+            }
         });
     });
     
