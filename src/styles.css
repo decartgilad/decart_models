@@ -116,7 +116,7 @@ body {
     justify-content: center;
     align-items: center;
     position: absolute;
-    top: 10%;
+    top: 15%;
     left: 50%;
     transform-origin: center;
     transform: translateX(-50%) rotate(-90deg);
@@ -452,6 +452,17 @@ body {
         width: 24px;
         height: 24px;
     }
+    
+    .logo-container {
+        width: 130px;
+        height: 30px;
+        top: 13%;
+    }
+    
+    .nav-menu {
+        left: 40px;
+        bottom: 70px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -520,8 +531,14 @@ body {
     }
     
     .logo-container {
-        width: 130px;
-        height: 30px;
+        width: 120px;
+        height: 28px;
+        top: 12%;
+    }
+    
+    .nav-menu {
+        left: 30px;
+        bottom: 60px;
     }
 }
 
@@ -590,8 +607,15 @@ body {
     }
     
     .logo-container {
-        width: 90px;
-        height: 22px;
+        width: 80px;
+        height: 20px;
+        top: 10%;
+    }
+    
+    .nav-menu {
+        left: 15px;
+        bottom: 40px;
+        gap: 8px;
     }
 }
 
