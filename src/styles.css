@@ -468,42 +468,57 @@ body {
 @media (max-width: 768px) {
     :root {
         --sidebar-width: 80px;
-        --hero-left: 100px;
-        --hero-content-left: 100px;
-        --cta-top: 350px;
+        --hero-left: 20px;
+        --hero-content-left: 20px;
+        --cta-top: 400px;
+    }
+    
+    .main-content {
+        margin-left: 80px;
+        padding: 20px;
     }
     
     .hero {
-        width: calc(100vw - 120px);
-        top: 120px;
+        position: relative;
+        left: 0;
+        top: 60px;
+        width: 100%;
+        max-width: calc(100vw - 120px);
     }
     
     .hero-title {
-        font-size: 36px;
+        font-size: 28px;
         height: auto;
         line-height: 1.1;
         margin-bottom: 30px;
+        width: 100%;
     }
     
     .hero-content {
+        position: relative;
+        left: 0;
+        top: 0;
         flex-direction: column;
-        width: calc(100vw - 140px);
+        width: 100%;
         height: auto;
-        gap: 24px;
+        gap: 20px;
         align-items: flex-start;
-        top: 300px;
+        margin-top: 30px;
     }
     
     .hero-description {
         width: 100%;
         height: auto;
-        font-size: 15px;
-        line-height: 1.5;
+        font-size: 14px;
+        line-height: 1.4;
     }
     
     .cta-button {
-        width: 200px;
-        height: 52px;
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 180px;
+        height: 48px;
         margin-top: 20px;
     }
     
@@ -544,25 +559,38 @@ body {
 
 @media (max-width: 480px) {
     :root {
-        --sidebar-width: 50px;
-        --hero-left: 70px;
-        --cta-top: 320px;
+        --sidebar-width: 60px;
+        --hero-left: 15px;
+        --cta-top: 350px;
+    }
+    
+    .main-content {
+        margin-left: 60px;
+        padding: 15px;
     }
     
     .hero {
-        width: calc(100vw - 90px);
-        top: 80px;
+        position: relative;
+        left: 0;
+        top: 40px;
+        width: 100%;
+        max-width: calc(100vw - 90px);
     }
     
     .hero-title {
-        font-size: 24px;
+        font-size: 22px;
         line-height: 1.1;
         margin-bottom: 20px;
+        width: 100%;
     }
     
     .hero-content {
-        width: calc(100vw - 110px);
-        top: 250px;
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin-top: 25px;
+        gap: 15px;
     }
     
     .hero-description {
@@ -571,8 +599,12 @@ body {
     }
     
     .cta-button {
+        position: relative;
+        left: 0;
+        top: 0;
         width: 160px;
         height: 44px;
+        margin-top: 15px;
     }
     
     .button-text {
@@ -613,9 +645,13 @@ body {
     }
     
     .nav-menu {
-        left: 15px;
-        bottom: 40px;
-        gap: 8px;
+        left: 10px;
+        bottom: 30px;
+        gap: 6px;
+    }
+    
+    .sidebar {
+        width: 60px;
     }
 }
 
