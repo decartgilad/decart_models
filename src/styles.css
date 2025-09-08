@@ -160,9 +160,9 @@ body {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
+    padding: clamp(0.75rem, 2vw, 1.25rem) clamp(1.5rem, 3vw, 2.25rem);
     background: transparent;
-    border: 1px solid var(--color-secondary);
+    border: 0.792235px solid var(--color-secondary);
     border-radius: var(--border-radius);
     color: var(--color-secondary);
     text-decoration: none;
@@ -172,6 +172,9 @@ body {
     letter-spacing: 0.05em;
     transition: var(--transition);
     cursor: pointer;
+    width: clamp(180px, 15vw, 216px);
+    height: clamp(48px, 4vw, 56px);
+    justify-content: center;
 }
 
 .twitter-button:hover {
