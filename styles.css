@@ -66,18 +66,18 @@ body {
 
 .sidebar-content {
     height: 100%;
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 80px 0;
 }
 
 /* Logo */
 .logo-container {
-    position: absolute;
-    width: 161.45px;
-    height: 37px;
-    left: calc(50% - 161.45px/2 + 61.72px);
-    top: 80px;
-    
     transform: rotate(-90deg);
+    width: 163px;
+    height: 38px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -99,42 +99,27 @@ body {
 
 /* Navigation Menu */
 .nav-menu {
-    /* Auto layout */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 0px;
     gap: 12.48px;
-    
-    position: absolute;
     width: 85px;
-    height: 149.93px;
-    left: 52px;
-    top: 892px;
 }
 
 .nav-item {
     width: 85px;
     height: 20px;
-    
     font-family: 'TT Commons', sans-serif;
     font-style: normal;
     font-weight: 500;
     font-size: 22px;
     line-height: 20px;
-    /* identical to box height, or 89% */
     display: flex;
     align-items: center;
     letter-spacing: -0.736821px;
-    
     color: #4D565F;
     text-decoration: none;
     transition: color 0.3s ease;
-    
-    /* Inside auto layout */
-    flex: none;
-    align-self: stretch;
-    flex-grow: 0;
 }
 
 .nav-item:hover {
@@ -156,23 +141,19 @@ body {
 
 /* Twitter Button */
 .twitter-button {
-    box-sizing: border-box;
-    
-    /* Auto layout */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-end;
-    padding: 20px 36px;
-    gap: 10px;
-    
     position: absolute;
     width: 187.53px;
     height: 55.46px;
-    left: calc(50% - 187.53px/2 + 770.77px);
+    right: 85px;
     top: 85px;
     
-    /* DECART-WHITE */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 36px;
+    gap: 8px;
+    
     border: 0.792235px solid #FFFFFF;
     border-radius: 79.2235px;
     cursor: pointer;
@@ -183,55 +164,20 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.twitter-button-content {
-    /* Auto layout */
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: 0px;
-    gap: 8px;
-    
-    width: 115.53px;
-    height: 28.53px;
-    
-    /* Inside auto layout */
-    flex: none;
-    order: 0;
-    flex-grow: 0;
-}
-
 .join-text {
-    width: 79px;
-    height: 8px;
-    
-    /* Btn-Txt */
     font-family: 'Replica-Mono', 'Roboto Mono', monospace;
     font-style: normal;
     font-weight: 400;
     font-size: 11.9041px;
     line-height: 150%;
-    /* or 18px */
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    
-    /* DECART-WHITE */
     color: #FFFFFF;
-    
-    /* Inside auto layout */
-    flex: none;
-    order: 0;
-    flex-grow: 0;
 }
 
 .twitter-icon {
     width: 28.53px;
     height: 28.53px;
-    
-    /* Inside auto layout */
-    flex: none;
-    order: 1;
-    flex-grow: 0;
 }
 
 /* Hero Section */
@@ -262,13 +208,12 @@ body {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    padding: 0px;
     gap: 24px;
-    position: absolute;
     width: 408px;
     height: 48px;
-    left: 875px;
+    position: absolute;
     top: 435px;
+    left: 328px;
 }
 
 .hero-description {
@@ -280,12 +225,9 @@ body {
     font-weight: 400;
     font-size: 16px;
     line-height: 151%;
-    /* or 24px */
     display: flex;
     align-items: center;
     color: #FFFFFF;
-    
-    /* Inside auto layout */
     flex: none;
     order: 0;
     flex-grow: 0;
@@ -323,34 +265,20 @@ body {
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    padding: 0px;
     gap: 8px;
     width: 144px;
     height: 11.62px;
-    
-    /* Inside auto layout */
-    flex: none;
-    order: 0;
-    align-self: stretch;
-    flex-grow: 0;
 }
 
 .button-text {
-    width: 110px;
-    height: 8px;
-    
-    /* Btn-Txt */
     font-family: 'Replica-Mono', 'Roboto Mono', monospace;
     font-style: normal;
     font-weight: 400;
     font-size: 11.9041px;
     line-height: 150%;
-    /* or 18px */
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: #000000;
-    
-    /* Inside auto layout */
     flex: none;
     order: 0;
     flex-grow: 0;
@@ -361,8 +289,6 @@ body {
     height: 8.64px;
     border-radius: 15.5919px;
     transform: rotate(45deg);
-    
-    /* Inside auto layout */
     flex: none;
     order: 1;
     flex-grow: 0;
@@ -391,13 +317,8 @@ body {
         width: 100%;
     }
     
-    .hero-content {
-        left: 600px;
-        width: calc(100vw - 650px);
-    }
-    
     .twitter-button {
-        left: calc(50% - 187.53px/2 + 400px);
+        right: 60px;
         top: 60px;
     }
 }
@@ -424,11 +345,8 @@ body {
     }
     
     .hero-content {
-        left: 500px;
-        top: 400px;
-        width: calc(100vw - 550px);
-        flex-direction: column;
-        gap: 20px;
+        width: 100%;
+        max-width: 500px;
     }
     
     .hero-description {
@@ -436,13 +354,8 @@ body {
         max-width: 450px;
     }
     
-    .cta-button {
-        left: 140px;
-        top: 380px;
-    }
-    
     .twitter-button {
-        left: calc(50% - 160px/2 + 300px);
+        right: 40px;
         top: 40px;
         width: 160px;
         height: 48px;
@@ -456,18 +369,6 @@ body {
     .twitter-icon {
         width: 24px;
         height: 24px;
-    }
-    
-    .nav-menu {
-        left: 40px;
-        top: 700px;
-    }
-    
-    .logo-container {
-        left: calc(50% - 130px/2 + 40px);
-        top: 60px;
-        width: 130px;
-        height: 30px;
     }
 }
 
