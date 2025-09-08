@@ -116,7 +116,7 @@ body {
     justify-content: center;
     align-items: center;
     position: absolute;
-    top: 25%;
+    top: 10%;
     left: 50%;
     transform-origin: center;
     transform: translateX(-50%) rotate(-90deg);
