@@ -107,7 +107,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: clamp(5vh, 15vh, 20vh);
+    margin-top: clamp(2vh, 10vh, 15vh);
 }
 
 .logo img {
@@ -119,7 +119,7 @@ body {
 .nav-menu {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     align-items: flex-start;
 }
 
