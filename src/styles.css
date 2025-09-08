@@ -47,6 +47,7 @@
     --space-md: clamp(1.5rem, 4vw, 2.5rem);
     --space-lg: clamp(2rem, 5vw, 4rem);
     --space-xl: clamp(3rem, 8vw, 6rem);
+    --space-xxs: clamp(0.25rem, 1vw, 0.5rem);
     
     /* Layout */
     --sidebar-width: clamp(3rem, 12vw, 11.75rem);
@@ -119,7 +120,7 @@ body {
 .nav-menu {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-xxs);
     align-items: flex-start;
 }
 
@@ -159,7 +160,7 @@ body {
 .twitter-button {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: clamp(0.25rem, 1vw, 0.5rem);
     padding: clamp(0.75rem, 2vw, 1.25rem) clamp(1.5rem, 3vw, 2.25rem);
     background: transparent;
     border: 0.792235px solid var(--color-secondary);
@@ -183,8 +184,8 @@ body {
 }
 
 .twitter-icon {
-    width: clamp(16px, 3vw, 28px);
-    height: clamp(16px, 3vw, 28px);
+    width: clamp(12px, 2vw, 20px);
+    height: clamp(12px, 2vw, 20px);
 }
 
 /* ===== HERO SECTION ===== */
@@ -392,12 +393,13 @@ body {
     transform: translateZ(0);
 }
 
-/* Focus styles for accessibility */
+/* Remove focus outlines */
 .cta-button:focus,
 .twitter-button:focus,
-.nav-item:focus {
-    outline: 2px solid var(--color-secondary);
-    outline-offset: 2px;
+.nav-item:focus,
+button:focus,
+a:focus {
+    outline: none;
 }
 
 /* Print styles */
