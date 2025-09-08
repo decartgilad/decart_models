@@ -66,18 +66,19 @@ body {
 
 .sidebar-content {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 80px 0;
     position: relative;
 }
 
 /* Logo */
 .logo-container {
-    position: absolute;
+    transform: rotate(-90deg);
     width: 161.45px;
     height: 37px;
-    left: calc(50% - 161.45px/2 + 61.72px);
-    top: 80px;
-    
-    transform: rotate(-90deg);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -99,18 +100,11 @@ body {
 
 /* Navigation Menu */
 .nav-menu {
-    /* Auto layout */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 0px;
     gap: 12.48px;
-    
-    position: absolute;
     width: 85px;
-    height: 149.93px;
-    left: 52px;
-    top: 892px;
 }
 
 .nav-item {
@@ -162,14 +156,14 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: flex-end;
+    align-items: center;
     padding: 20px 36px;
     gap: 10px;
     
     position: absolute;
     width: 187.53px;
     height: 55.46px;
-    left: calc(50% - 187.53px/2 + 770.77px);
+    right: 85px;
     top: 85px;
     
     /* DECART-WHITE */
@@ -392,12 +386,12 @@ body {
     }
     
     .hero-content {
-        left: 600px;
-        width: calc(100vw - 650px);
+        left: 650px;
+        width: calc(100vw - 700px);
     }
     
     .twitter-button {
-        left: calc(50% - 187.53px/2 + 400px);
+        right: 60px;
         top: 60px;
     }
 }
@@ -427,8 +421,6 @@ body {
         left: 500px;
         top: 400px;
         width: calc(100vw - 550px);
-        flex-direction: column;
-        gap: 20px;
     }
     
     .hero-description {
@@ -442,7 +434,7 @@ body {
     }
     
     .twitter-button {
-        left: calc(50% - 160px/2 + 300px);
+        right: 40px;
         top: 40px;
         width: 160px;
         height: 48px;
