@@ -25,24 +25,38 @@
 
 /* ===== CSS VARIABLES ===== */
 :root {
+    /* Colors */
     --color-primary: #000000;
     --color-secondary: #FFFFFF;
     --color-accent: #0037FF;
     --color-text-muted: #4D565F;
     
+    /* Fonts */
     --font-primary: 'TT Commons', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'Replica-Mono', 'Roboto Mono', monospace;
     
-    --sidebar-width: 188px;
-    --border-radius: 79.2235px;
-    --transition: all 0.3s ease;
+    /* Fluid Typography */
+    --fs-hero: clamp(2.5rem, 4vw + 1rem, 4.18rem);
+    --fs-body: clamp(0.875rem, 1.5vw + 0.5rem, 1rem);
+    --fs-button: clamp(0.625rem, 1vw + 0.25rem, 0.744rem);
+    --fs-nav: clamp(1rem, 2vw + 0.5rem, 1.375rem);
     
-    /* Layout positions */
-    --hero-left: 328px;
-    --hero-top: 241px;
-    --hero-content-left: 875px;
-    --hero-content-top: 435px;
-    --cta-top: 428px;
+    /* Spacing System */
+    --space-xs: clamp(0.5rem, 2vw, 1rem);
+    --space-sm: clamp(1rem, 3vw, 1.5rem);
+    --space-md: clamp(1.5rem, 4vw, 2.5rem);
+    --space-lg: clamp(2rem, 5vw, 4rem);
+    --space-xl: clamp(3rem, 8vw, 6rem);
+    
+    /* Layout */
+    --sidebar-width: clamp(3rem, 12vw, 11.75rem);
+    --content-padding: clamp(1.25rem, 3vw, 2.5rem);
+    --border-radius: clamp(2.5rem, 5vw, 4.95rem);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Container sizes */
+    --container-max: 1920px;
+    --content-max: 1200px;
 }
 
 /* ===== RESET & BASE ===== */
@@ -63,107 +77,61 @@ body {
     color: var(--color-secondary);
     overflow-x: hidden;
     min-height: 100vh;
-    display: flex;
-    position: relative;
-    width: 100%;
-    max-width: 1920px;
-    min-height: 1080px;
+    line-height: 1.6;
 }
 
-/* ===== UTILITY CLASSES ===== */
-.flex-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.flex-column {
-    display: flex;
-    flex-direction: column;
-}
-
-.text-uppercase {
-    text-transform: uppercase;
+/* ===== LAYOUT SYSTEM ===== */
+.app-container {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    min-height: 100vh;
+    max-width: var(--container-max);
+    margin: 0 auto;
 }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: var(--sidebar-width);
-    height: 100vh;
     background: var(--color-primary);
-    z-index: 1000;
-}
-
-.sidebar-content {
-    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
-    padding: 80px 0;
-    position: relative;
+    padding: var(--space-lg) 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
 }
 
-/* ===== LOGO ===== */
 .logo-container {
     transform: rotate(-90deg);
-    width: 161.45px;
-    height: 37px;
     display: flex;
     justify-content: center;
     align-items: center;
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform-origin: center;
-    transform: translateX(-50%) rotate(-90deg);
-}
-
-.logo {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    margin-top: clamp(5vh, 15vh, 20vh);
 }
 
 .logo img {
-    width: 100%;
-    height: 100%;
+    width: clamp(60px, 8vw, 160px);
+    height: auto;
     object-fit: contain;
 }
 
-/* ===== NAVIGATION ===== */
 .nav-menu {
     display: flex;
     flex-direction: column;
+    gap: var(--space-sm);
     align-items: flex-start;
-    gap: 12.48px;
-    width: 85px;
-    position: absolute;
-    bottom: 80px;
-    left: 52px;
 }
 
 .nav-item {
-    width: 85px;
-    height: 20px;
     font-family: var(--font-primary);
     font-weight: 500;
-    font-size: 22px;
-    line-height: 20px;
-    display: flex;
-    align-items: center;
-    letter-spacing: -0.736821px;
+    font-size: var(--fs-nav);
     color: var(--color-text-muted);
     text-decoration: none;
     transition: var(--transition);
-    flex: none;
-    align-self: stretch;
-    flex-grow: 0;
+    white-space: nowrap;
+    letter-spacing: -0.02em;
 }
 
 .nav-item:hover,
@@ -173,519 +141,232 @@ body {
 
 /* ===== MAIN CONTENT ===== */
 .main-content {
-    flex: 1;
-    margin-left: var(--sidebar-width);
-    position: relative;
-    height: 100vh;
-    background: var(--color-primary);
-}
-
-/* ===== BUTTONS ===== */
-.btn {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
+    flex-direction: column;
+    padding: var(--content-padding);
+    position: relative;
+    min-height: 100vh;
 }
 
-.btn:hover {
-    transform: translateY(-2px);
+/* ===== HEADER ACTIONS ===== */
+.header-actions {
+    position: absolute;
+    top: var(--space-lg);
+    right: var(--space-lg);
+    z-index: 100;
 }
 
-/* Twitter Button */
 .twitter-button {
     display: flex;
-    justify-content: center;
     align-items: center;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
-    position: absolute;
-    width: 187.53px;
-    height: 55.46px;
-    right: 85px;
-    top: 85px;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
     background: transparent;
-    border: 0.792235px solid var(--color-secondary);
-    padding: 20px 36px;
+    border: 1px solid var(--color-secondary);
+    border-radius: var(--border-radius);
+    color: var(--color-secondary);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: var(--fs-button);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: var(--transition);
+    cursor: pointer;
 }
 
 .twitter-button:hover {
     background: rgba(255, 255, 255, 0.1);
-}
-
-.twitter-button-content {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    width: 115.53px;
-    height: 28.53px;
-}
-
-.join-text {
-    width: 79px;
-    height: 8px;
-    font-family: var(--font-mono);
-    font-weight: 400;
-    font-size: 11.9041px;
-    line-height: 1;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--color-secondary);
-    flex: none;
-    order: 0;
-    flex-grow: 0;
-    display: flex;
-    align-items: center;
+    transform: translateY(-2px);
 }
 
 .twitter-icon {
-    width: 28.53px;
-    height: 28.53px;
-    flex: none;
-    order: 1;
-    flex-grow: 0;
-}
-
-/* CTA Button */
-.cta-button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
-    position: absolute;
-    width: 216px;
-    height: 56px;
-    left: var(--hero-left);
-    top: var(--cta-top);
-    background: var(--color-secondary);
-    border: 0.792235px solid var(--color-secondary);
-    padding: 20px 36px;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.cta-button:hover {
-    background: rgba(255, 255, 255, 0.9);
-}
-
-.button-content {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    width: 144px;
-    height: 11.62px;
-    flex: none;
-    order: 0;
-    align-self: stretch;
-    flex-grow: 0;
-}
-
-.button-text {
-    width: 110px;
-    height: 8px;
-    font-family: var(--font-mono);
-    font-weight: 400;
-    font-size: 11.9041px;
-    line-height: 1;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--color-primary);
-    flex: none;
-    order: 0;
-    flex-grow: 0;
-    display: flex;
-    align-items: center;
-}
-
-.button-arrow {
-    width: 7.79px;
-    height: 8.64px;
-    border-radius: 15.5919px;
-    transform: rotate(45deg);
-    flex: none;
-    order: 1;
-    flex-grow: 0;
+    width: clamp(16px, 3vw, 28px);
+    height: clamp(16px, 3vw, 28px);
 }
 
 /* ===== HERO SECTION ===== */
 .hero {
-    position: absolute;
-    left: var(--hero-left);
-    top: var(--hero-top);
-    width: 919px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 80vh;
+    max-width: var(--content-max);
+    gap: var(--space-xl);
 }
 
 .hero-title {
-    width: 919px;
-    height: 132px;
     font-family: var(--font-primary);
     font-weight: 400;
-    font-size: 66.8856px;
-    line-height: 98%;
-    display: flex;
-    align-items: center;
+    font-size: var(--fs-hero);
+    line-height: 0.98;
     letter-spacing: -0.04em;
     color: var(--color-secondary);
-    margin-bottom: 0;
+    max-width: 20ch;
+}
+
+.hero-bottom {
+    display: flex;
+    gap: clamp(2rem, 8vw, 8rem);
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-top: var(--space-lg);
 }
 
 .hero-content {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 24px;
-    position: absolute;
-    width: 408px;
-    height: 48px;
-    left: var(--hero-content-left);
-    top: var(--hero-content-top);
+    flex: 1;
+    min-width: clamp(250px, 30vw, 400px);
+    max-width: 400px;
 }
 
 .hero-description {
-    width: 394px;
-    height: 48px;
     font-family: var(--font-mono);
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 151%;
+    font-size: var(--fs-body);
+    line-height: 1.5;
+    color: var(--color-secondary);
+    max-width: 50ch;
+}
+
+.hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: flex-start;
+}
+
+.cta-button {
     display: flex;
     align-items: center;
-    color: var(--color-secondary);
-    flex: none;
-    order: 0;
-    flex-grow: 0;
+    gap: var(--space-xs);
+    padding: clamp(0.75rem, 2vw, 1.25rem) clamp(1.5rem, 3vw, 2.25rem);
+    background: var(--color-secondary);
+    border: 0.792235px solid var(--color-secondary);
+    border-radius: var(--border-radius);
+    color: var(--color-primary);
+    font-family: var(--font-mono);
+    font-size: var(--fs-button);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    width: clamp(180px, 15vw, 216px);
+    height: clamp(48px, 4vw, 56px);
+    justify-content: center;
+}
+
+.cta-button:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+.button-arrow {
+    width: 8px;
+    height: 8px;
+    transform: rotate(45deg);
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 1920px) {
-    body {
-        width: 100vw;
-        height: 100vh;
-    }
-    
-    .hero {
-        left: min(var(--hero-left), calc(50vw - 460px));
-    }
-}
-
-@media (max-width: 1400px) {
+@media (max-width: 1024px) {
     :root {
-        --hero-left: 200px;
-        --hero-content-left: 650px;
+        --fs-hero: clamp(1.75rem, 6vw + 0.5rem, 3.5rem);
+        --sidebar-width: clamp(2.5rem, 10vw, 8rem);
     }
     
-    .hero {
-        width: calc(100vw - 400px);
-    }
-    
-    .hero-title {
-        font-size: 56px;
-        width: 100%;
+    .hero-bottom {
+        flex-direction: column;
+        gap: var(--space-lg);
     }
     
     .hero-content {
-        width: calc(100vw - 700px);
-    }
-    
-    .twitter-button {
-        right: 60px;
-        top: 60px;
-    }
-}
-
-@media (max-width: 1200px) {
-    :root {
-        --sidebar-width: 120px;
-        --hero-left: 140px;
-        --hero-content-left: 500px;
-        --cta-top: 380px;
-    }
-    
-    .hero {
-        width: calc(100vw - 200px);
-        top: 200px;
-    }
-    
-    .hero-title {
-        font-size: 48px;
-        margin-bottom: 40px;
-    }
-    
-    .hero-content {
-        top: 400px;
-        width: calc(100vw - 550px);
-    }
-    
-    .hero-description {
-        width: 100%;
-        max-width: 450px;
-    }
-    
-    .twitter-button {
-        right: 40px;
-        top: 40px;
-        width: 160px;
-        height: 48px;
-        padding: 16px 24px;
-    }
-    
-    .join-text {
-        font-size: 10px;
-    }
-    
-    .twitter-icon {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .logo-container {
-        width: 130px;
-        height: 30px;
-        top: 13%;
-    }
-    
-    .nav-menu {
-        left: 40px;
-        bottom: 70px;
+        min-width: auto;
     }
 }
 
 @media (max-width: 768px) {
+    .app-container {
+        grid-template-columns: var(--sidebar-width) 1fr;
+    }
+    
     :root {
-        --sidebar-width: 80px;
-        --hero-left: 20px;
-        --hero-content-left: 20px;
-        --cta-top: 400px;
+        --fs-hero: clamp(1.5rem, 7vw + 0.5rem, 2.5rem);
+        --sidebar-width: clamp(2rem, 8vw, 5rem);
+        --content-padding: clamp(0.75rem, 2vw, 1.5rem);
     }
     
-    .main-content {
-        margin-left: 80px;
-        padding: 20px;
-    }
-    
-    .hero {
-        position: relative;
-        left: 0;
-        top: 60px;
-        width: 100%;
-        max-width: calc(100vw - 120px);
-    }
-    
-    .hero-title {
-        font-size: 28px;
-        height: auto;
-        line-height: 1.1;
-        margin-bottom: 30px;
-        width: 100%;
-    }
-    
-    .hero-content {
-        position: relative;
-        left: 0;
-        top: 0;
-        flex-direction: column;
-        width: 100%;
-        height: auto;
-        gap: 20px;
-        align-items: flex-start;
-        margin-top: 30px;
-    }
-    
-    .hero-description {
-        width: 100%;
-        height: auto;
-        font-size: 14px;
-        line-height: 1.4;
-    }
-    
-    .cta-button {
-        position: relative;
-        left: 0;
-        top: 0;
-        width: 180px;
-        height: 48px;
-        margin-top: 20px;
-    }
-    
-    .twitter-button {
-        right: 20px;
-        top: 20px;
-        width: 140px;
-        height: 44px;
-        padding: 12px 20px;
-    }
-    
-    .join-text {
-        font-size: 9px;
-    }
-    
-    .twitter-icon {
-        width: 20px;
-        height: 20px;
-    }
-    
-    .nav-item {
-        font-size: 16px;
-        width: 60px;
-        letter-spacing: -0.5px;
+    .sidebar {
+        padding: var(--space-md) 0;
     }
     
     .logo-container {
-        width: 120px;
-        height: 28px;
-        top: 12%;
+        margin-top: 5vh;
     }
     
-    .nav-menu {
-        left: 30px;
-        bottom: 60px;
+    .nav-item {
+        font-size: clamp(0.75rem, 2vw + 0.25rem, 1rem);
+    }
+    
+    .hero {
+        min-height: 70vh;
+        gap: var(--space-lg);
+    }
+    
+    .hero-title {
+        max-width: none;
+    }
+    
+    .header-actions {
+        position: static;
+        margin-bottom: var(--space-lg);
+        align-self: flex-end;
+    }
+    
+    .twitter-button {
+        padding: var(--space-xs) var(--space-sm);
     }
 }
 
 @media (max-width: 480px) {
     :root {
-        --sidebar-width: 60px;
-        --hero-left: 15px;
-        --cta-top: 350px;
-    }
-    
-    .main-content {
-        margin-left: 60px;
-        padding: 15px;
+        --fs-hero: clamp(1.25rem, 8vw + 0.25rem, 2rem);
+        --sidebar-width: clamp(1.5rem, 6vw, 3.5rem);
     }
     
     .hero {
-        position: relative;
-        left: 0;
-        top: 40px;
-        width: 100%;
-        max-width: calc(100vw - 90px);
+        min-height: 60vh;
     }
     
-    .hero-title {
-        font-size: 22px;
-        line-height: 1.1;
-        margin-bottom: 20px;
-        width: 100%;
+    .nav-menu {
+        gap: var(--space-xs);
     }
     
-    .hero-content {
-        position: relative;
-        left: 0;
-        top: 0;
+    .hero-actions {
         width: 100%;
-        margin-top: 25px;
-        gap: 15px;
-    }
-    
-    .hero-description {
-        font-size: 13px;
-        line-height: 1.4;
     }
     
     .cta-button {
-        position: relative;
-        left: 0;
-        top: 0;
-        width: 160px;
-        height: 44px;
-        margin-top: 15px;
-    }
-    
-    .button-text {
-        font-size: 9px;
-    }
-    
-    .twitter-button {
-        right: 10px;
-        top: 10px;
-        width: 100px;
-        height: 36px;
-        padding: 8px 12px;
-    }
-    
-    .join-text {
-        font-size: 7px;
-    }
-    
-    .twitter-icon {
-        width: 16px;
-        height: 16px;
-    }
-    
-    .nav-item {
-        font-size: 12px;
-        width: 45px;
-        letter-spacing: -0.3px;
-    }
-    
-    .nav-menu {
-        gap: 10px;
-    }
-    
-    .logo-container {
-        width: 80px;
-        height: 20px;
-        top: 10%;
-    }
-    
-    .nav-menu {
-        left: 10px;
-        bottom: 30px;
-        gap: 6px;
-    }
-    
-    .sidebar {
-        width: 60px;
+        align-self: stretch;
+        justify-content: center;
     }
 }
 
 /* ===== LANDSCAPE ORIENTATION ===== */
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-height: 600px) and (orientation: landscape) {
     .hero {
-        top: 60px;
+        min-height: 90vh;
+        justify-content: flex-start;
+        padding-top: var(--space-lg);
     }
     
-    .hero-title {
-        font-size: 20px;
-        margin-bottom: 15px;
+    .sidebar {
+        padding: var(--space-sm) 0;
     }
     
-    .hero-content {
-        gap: 15px;
-        top: 150px;
-    }
-    
-    .cta-button {
-        top: 200px;
-    }
-    
-    .twitter-button {
-        top: 10px;
-        right: 10px;
-    }
-    
-    .sidebar-content {
-        padding: 40px 0 30px;
+    .logo-container {
+        margin-top: 2vh;
     }
 }
 
-/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+/* ===== ACCESSIBILITY & PERFORMANCE ===== */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
@@ -694,15 +375,39 @@ body {
     }
 }
 
-/* Will-change for animated elements */
-.btn:hover,
-.nav-item:hover {
-    will-change: transform;
+@media (prefers-contrast: high) {
+    :root {
+        --color-text-muted: #FFFFFF;
+    }
 }
 
-/* GPU acceleration for smoother animations */
-.hero-title,
+/* GPU acceleration for smooth animations */
 .cta-button,
-.twitter-button {
+.twitter-button,
+.nav-item {
+    will-change: transform;
     transform: translateZ(0);
+}
+
+/* Focus styles for accessibility */
+.cta-button:focus,
+.twitter-button:focus,
+.nav-item:focus {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .sidebar {
+        display: none;
+    }
+    
+    .app-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero {
+        min-height: auto;
+    }
 }
