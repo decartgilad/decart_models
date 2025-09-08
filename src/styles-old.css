@@ -1,10 +1,9 @@
-/* ===== FONT IMPORTS ===== */
+/* Local Font Imports */
 @font-face {
     font-family: 'TT Commons';
     src: url('./font/TT Commons Regular.otf') format('opentype');
     font-weight: 400;
     font-style: normal;
-    font-display: swap;
 }
 
 @font-face {
@@ -12,7 +11,13 @@
     src: url('./font/TT Commons Medium.otf') format('opentype');
     font-weight: 500;
     font-style: normal;
-    font-display: swap;
+}
+
+@font-face {
+    font-family: 'TT Commons';
+    src: url('./font/TT Commons Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
 }
 
 @font-face {
@@ -20,80 +25,42 @@
     src: url('./font/ReplicaMono.otf') format('opentype');
     font-weight: 400;
     font-style: normal;
-    font-display: swap;
 }
 
-/* ===== CSS VARIABLES ===== */
-:root {
-    --color-primary: #000000;
-    --color-secondary: #FFFFFF;
-    --color-accent: #0037FF;
-    --color-text-muted: #4D565F;
-    
-    --font-primary: 'TT Commons', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-mono: 'Replica-Mono', 'Roboto Mono', monospace;
-    
-    --sidebar-width: 188px;
-    --border-radius: 79.2235px;
-    --transition: all 0.3s ease;
-    
-    /* Layout positions */
-    --hero-left: 328px;
-    --hero-top: 241px;
-    --hero-content-left: 875px;
-    --hero-content-top: 435px;
-    --cta-top: 428px;
-}
-
-/* ===== RESET & BASE ===== */
-*, *::before, *::after {
+/* CSS Reset and Base Styles */
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html {
-    font-size: 16px;
-    scroll-behavior: smooth;
+html, body {
+    height: 100%;
+    font-family: 'TT Commons', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #000000;
+    color: #FFFFFF;
+    overflow-x: hidden;
 }
 
+/* Main Layout */
 body {
-    font-family: var(--font-primary);
-    background: var(--color-primary);
-    color: var(--color-secondary);
-    overflow-x: hidden;
-    min-height: 100vh;
     display: flex;
+    min-height: 100vh;
     position: relative;
     width: 100%;
     max-width: 1920px;
+    height: auto;
     min-height: 1080px;
 }
 
-/* ===== UTILITY CLASSES ===== */
-.flex-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.flex-column {
-    display: flex;
-    flex-direction: column;
-}
-
-.text-uppercase {
-    text-transform: uppercase;
-}
-
-/* ===== SIDEBAR ===== */
+/* Sidebar Navigation */
 .sidebar {
     position: fixed;
     left: 0;
     top: 0;
-    width: var(--sidebar-width);
+    width: 188px;
     height: 100vh;
-    background: var(--color-primary);
+    background: #000000;
     z-index: 1000;
 }
 
@@ -107,7 +74,7 @@ body {
     position: relative;
 }
 
-/* ===== LOGO ===== */
+/* Logo */
 .logo-container {
     transform: rotate(-90deg);
     width: 161.45px;
@@ -131,7 +98,7 @@ body {
     object-fit: contain;
 }
 
-/* ===== NAVIGATION ===== */
+/* Navigation Menu */
 .nav-menu {
     display: flex;
     flex-direction: column;
@@ -143,69 +110,67 @@ body {
 .nav-item {
     width: 85px;
     height: 20px;
-    font-family: var(--font-primary);
+    
+    font-family: 'TT Commons', sans-serif;
+    font-style: normal;
     font-weight: 500;
     font-size: 22px;
     line-height: 20px;
+    /* identical to box height, or 89% */
     display: flex;
     align-items: center;
     letter-spacing: -0.736821px;
-    color: var(--color-text-muted);
+    
+    color: #4D565F;
     text-decoration: none;
-    transition: var(--transition);
+    transition: color 0.3s ease;
+    
+    /* Inside auto layout */
     flex: none;
     align-self: stretch;
     flex-grow: 0;
 }
 
-.nav-item:hover,
-.nav-item.active {
-    color: var(--color-secondary);
+.nav-item:hover {
+    color: #FFFFFF;
 }
 
-/* ===== MAIN CONTENT ===== */
+.nav-item.active {
+    color: #FFFFFF;
+}
+
+/* Main Content */
 .main-content {
     flex: 1;
-    margin-left: var(--sidebar-width);
+    margin-left: 188px;
     position: relative;
     height: 100vh;
-    background: var(--color-primary);
-}
-
-/* ===== BUTTONS ===== */
-.btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
+    background: #000000;
 }
 
 /* Twitter Button */
 .twitter-button {
+    box-sizing: border-box;
+    
+    /* Auto layout */
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
+    padding: 20px 36px;
+    gap: 10px;
+    
     position: absolute;
     width: 187.53px;
     height: 55.46px;
     right: 85px;
     top: 85px;
-    background: transparent;
-    border: 0.792235px solid var(--color-secondary);
-    padding: 20px 36px;
+    
+    /* DECART-WHITE */
+    border: 0.792235px solid #FFFFFF;
+    border-radius: 79.2235px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .twitter-button:hover {
@@ -213,25 +178,41 @@ body {
 }
 
 .twitter-button-content {
+    /* Auto layout */
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    padding: 0px;
     gap: 8px;
+    
     width: 115.53px;
     height: 28.53px;
+    
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
 }
 
 .join-text {
     width: 79px;
     height: 8px;
-    font-family: var(--font-mono);
+    
+    /* Btn-Txt */
+    font-family: 'Replica-Mono', 'Roboto Mono', monospace;
+    font-style: normal;
     font-weight: 400;
     font-size: 11.9041px;
     line-height: 150%;
+    /* or 18px */
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--color-secondary);
+    
+    /* DECART-WHITE */
+    color: #FFFFFF;
+    
+    /* Inside auto layout */
     flex: none;
     order: 0;
     flex-grow: 0;
@@ -240,45 +221,108 @@ body {
 .twitter-icon {
     width: 28.53px;
     height: 28.53px;
+    
+    /* Inside auto layout */
     flex: none;
     order: 1;
     flex-grow: 0;
 }
 
+/* Hero Section */
+.hero {
+    position: absolute;
+    left: 328px;
+    top: 241px;
+    width: 919px;
+}
+
+.hero-title {
+    width: 919px;
+    height: 132px;
+    
+    font-family: 'TT Commons', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 66.8856px;
+    line-height: 98%;
+    display: flex;
+    align-items: center;
+    letter-spacing: -0.04em;
+    color: #FFFFFF;
+    margin-bottom: 0px;
+}
+
+.hero-content {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 24px;
+    position: absolute;
+    width: 408px;
+    height: 48px;
+    left: 875px;
+    top: 435px;
+}
+
+.hero-description {
+    width: 394px;
+    height: 48px;
+    
+    font-family: 'Replica-Mono', 'Roboto Mono', monospace;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 151%;
+    /* or 24px */
+    display: flex;
+    align-items: center;
+    color: #FFFFFF;
+    
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
 /* CTA Button */
 .cta-button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
     position: absolute;
     width: 216px;
     height: 56px;
-    left: var(--hero-left);
-    top: var(--cta-top);
-    background: var(--color-secondary);
-    border: 0.792235px solid var(--color-secondary);
-    padding: 20px 36px;
+    left: 328px;
+    top: 428px;
+    
+    display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: flex-end;
+    padding: 20px 36px;
+    gap: 10px;
+    
+    background: #FFFFFF;
+    border: 0.792235px solid #FFFFFF;
+    border-radius: 79.2235px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .cta-button:hover {
     background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
 }
 
-.button-content {
+.cta-button .button-content {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    padding: 0px;
     gap: 8px;
     width: 144px;
     height: 11.62px;
+    
+    /* Inside auto layout */
     flex: none;
     order: 0;
     align-self: stretch;
@@ -288,13 +332,19 @@ body {
 .button-text {
     width: 110px;
     height: 8px;
-    font-family: var(--font-mono);
+    
+    /* Btn-Txt */
+    font-family: 'Replica-Mono', 'Roboto Mono', monospace;
+    font-style: normal;
     font-weight: 400;
     font-size: 11.9041px;
     line-height: 150%;
+    /* or 18px */
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--color-primary);
+    color: #000000;
+    
+    /* Inside auto layout */
     flex: none;
     order: 0;
     flex-grow: 0;
@@ -305,61 +355,14 @@ body {
     height: 8.64px;
     border-radius: 15.5919px;
     transform: rotate(45deg);
+    
+    /* Inside auto layout */
     flex: none;
     order: 1;
     flex-grow: 0;
 }
 
-/* ===== HERO SECTION ===== */
-.hero {
-    position: absolute;
-    left: var(--hero-left);
-    top: var(--hero-top);
-    width: 919px;
-}
-
-.hero-title {
-    width: 919px;
-    height: 132px;
-    font-family: var(--font-primary);
-    font-weight: 400;
-    font-size: 66.8856px;
-    line-height: 98%;
-    display: flex;
-    align-items: center;
-    letter-spacing: -0.04em;
-    color: var(--color-secondary);
-    margin-bottom: 0;
-}
-
-.hero-content {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 24px;
-    position: absolute;
-    width: 408px;
-    height: 48px;
-    left: var(--hero-content-left);
-    top: var(--hero-content-top);
-}
-
-.hero-description {
-    width: 394px;
-    height: 48px;
-    font-family: var(--font-mono);
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 151%;
-    display: flex;
-    align-items: center;
-    color: var(--color-secondary);
-    flex: none;
-    order: 0;
-    flex-grow: 0;
-}
-
-/* ===== RESPONSIVE DESIGN ===== */
+/* Responsive Design */
 @media (max-width: 1920px) {
     body {
         width: 100vw;
@@ -367,17 +370,13 @@ body {
     }
     
     .hero {
-        left: min(var(--hero-left), calc(50vw - 460px));
+        left: min(328px, calc(50vw - 460px));
     }
 }
 
 @media (max-width: 1400px) {
-    :root {
-        --hero-left: 200px;
-        --hero-content-left: 650px;
-    }
-    
     .hero {
+        left: 200px;
         width: calc(100vw - 400px);
     }
     
@@ -387,6 +386,7 @@ body {
     }
     
     .hero-content {
+        left: 650px;
         width: calc(100vw - 700px);
     }
     
@@ -397,24 +397,28 @@ body {
 }
 
 @media (max-width: 1200px) {
-    :root {
-        --sidebar-width: 120px;
-        --hero-left: 140px;
-        --hero-content-left: 500px;
-        --cta-top: 380px;
+    .sidebar {
+        width: 120px;
+    }
+    
+    .main-content {
+        margin-left: 120px;
     }
     
     .hero {
+        left: 140px;
         width: calc(100vw - 200px);
         top: 200px;
     }
     
     .hero-title {
         font-size: 48px;
+        width: 100%;
         margin-bottom: 40px;
     }
     
     .hero-content {
+        left: 500px;
         top: 400px;
         width: calc(100vw - 550px);
     }
@@ -422,6 +426,11 @@ body {
     .hero-description {
         width: 100%;
         max-width: 450px;
+    }
+    
+    .cta-button {
+        left: 140px;
+        top: 380px;
     }
     
     .twitter-button {
@@ -440,19 +449,59 @@ body {
         width: 24px;
         height: 24px;
     }
+    
+    .nav-menu {
+        left: 40px;
+        top: 700px;
+    }
+    
+    .logo-container {
+        left: calc(50% - 130px/2 + 40px);
+        top: 60px;
+        width: 130px;
+        height: 30px;
+    }
 }
 
-@media (max-width: 768px) {
-    :root {
-        --sidebar-width: 80px;
-        --hero-left: 100px;
-        --hero-content-left: 100px;
-        --cta-top: 350px;
+@media (max-width: 992px) {
+    .sidebar {
+        width: 100px;
+    }
+    
+    .main-content {
+        margin-left: 100px;
     }
     
     .hero {
-        width: calc(100vw - 120px);
+        left: 120px;
+        top: 160px;
+        width: calc(100vw - 160px);
+    }
+    
+    .hero-title {
+        font-size: 42px;
+    }
+    
+    .nav-item {
+        font-size: 18px;
+        width: 80px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 80px;
+        padding: 40px 0;
+    }
+    
+    .main-content {
+        margin-left: 80px;
+    }
+    
+    .hero {
+        left: 100px;
         top: 120px;
+        width: calc(100vw - 120px);
     }
     
     .hero-title {
@@ -464,11 +513,10 @@ body {
     
     .hero-content {
         flex-direction: column;
-        width: calc(100vw - 140px);
+        width: 100%;
         height: auto;
         gap: 24px;
         align-items: flex-start;
-        top: 300px;
     }
     
     .hero-description {
@@ -479,6 +527,9 @@ body {
     }
     
     .cta-button {
+        position: relative;
+        top: 0;
+        left: 0;
         width: 200px;
         height: 52px;
         margin-top: 20px;
@@ -501,6 +552,10 @@ body {
         height: 20px;
     }
     
+    .nav-menu {
+        width: 60px;
+    }
+    
     .nav-item {
         font-size: 16px;
         width: 60px;
@@ -513,27 +568,93 @@ body {
     }
 }
 
-@media (max-width: 480px) {
-    :root {
-        --sidebar-width: 50px;
-        --hero-left: 70px;
-        --cta-top: 320px;
+@media (max-width: 640px) {
+    .sidebar {
+        width: 60px;
+        padding: 30px 0;
+    }
+    
+    .sidebar-content {
+        padding: 60px 0 40px;
+    }
+    
+    .main-content {
+        margin-left: 60px;
     }
     
     .hero {
-        width: calc(100vw - 90px);
+        left: 80px;
+        top: 100px;
+        width: calc(100vw - 100px);
+    }
+    
+    .hero-title {
+        font-size: 28px;
+        line-height: 1.1;
+        margin-bottom: 25px;
+    }
+    
+    .hero-description {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    .cta-button {
+        width: 180px;
+        height: 48px;
+    }
+    
+    .button-text {
+        font-size: 10px;
+    }
+    
+    .twitter-button {
+        right: 15px;
+        top: 15px;
+        width: 120px;
+        height: 40px;
+        padding: 10px 16px;
+    }
+    
+    .join-text {
+        font-size: 8px;
+    }
+    
+    .twitter-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .nav-item {
+        font-size: 14px;
+        width: 50px;
+    }
+    
+    .logo-container {
+        width: 110px;
+        height: 26px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 50px;
+    }
+    
+    .main-content {
+        margin-left: 50px;
+    }
+    
+    .hero {
+        left: 70px;
         top: 80px;
+        width: calc(100vw - 90px);
     }
     
     .hero-title {
         font-size: 24px;
         line-height: 1.1;
         margin-bottom: 20px;
-    }
-    
-    .hero-content {
-        width: calc(100vw - 110px);
-        top: 250px;
     }
     
     .hero-description {
@@ -583,7 +704,7 @@ body {
     }
 }
 
-/* ===== LANDSCAPE ORIENTATION ===== */
+/* Landscape orientation for mobile */
 @media (max-height: 500px) and (orientation: landscape) {
     .hero {
         top: 60px;
@@ -596,11 +717,10 @@ body {
     
     .hero-content {
         gap: 15px;
-        top: 150px;
     }
     
     .cta-button {
-        top: 200px;
+        margin-top: 10px;
     }
     
     .twitter-button {
@@ -611,26 +731,4 @@ body {
     .sidebar-content {
         padding: 40px 0 30px;
     }
-}
-
-/* ===== PERFORMANCE OPTIMIZATIONS ===== */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Will-change for animated elements */
-.btn:hover,
-.nav-item:hover {
-    will-change: transform;
-}
-
-/* GPU acceleration for smoother animations */
-.hero-title,
-.cta-button,
-.twitter-button {
-    transform: translateZ(0);
 }
