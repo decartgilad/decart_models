@@ -124,6 +124,45 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Model Visualization Section -->
+            <section class="model-visualization">
+                <div class="visualization-controls">
+                    <div class="dropdown-container">
+                        <label class="dropdown-label">Model Visualization</label>
+                        <div class="custom-dropdown">
+                            <button class="dropdown-trigger" type="button">
+                                <span class="dropdown-text">Architecture Overview</span>
+                                <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item" data-value="architecture">Architecture Overview</div>
+                                <div class="dropdown-item" data-value="performance">Performance Metrics</div>
+                                <div class="dropdown-item" data-value="training">Training Process</div>
+                                <div class="dropdown-item" data-value="benchmarks">Benchmark Results</div>
+                                <div class="dropdown-item" data-value="comparisons">Model Comparisons</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visualization-frame">
+                    <div class="frame-placeholder" id="visualizationFrame">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon">
+                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                    <rect x="8" y="12" width="32" height="24" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                    <path d="M16 20L20 24L32 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <h3 class="placeholder-title">Architecture Overview</h3>
+                            <p class="placeholder-description">Interactive visualization of Lucy14b neural network architecture and data flow</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -150,6 +189,88 @@
         preloadLink.rel = 'prefetch';
         preloadLink.href = 'index.html';
         document.head.appendChild(preloadLink);
+        
+        // Dropdown functionality
+        const dropdownTrigger = document.querySelector('.dropdown-trigger');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        const dropdownText = document.querySelector('.dropdown-text');
+        const dropdownItems = document.querySelectorAll('.dropdown-item');
+        const visualizationFrame = document.getElementById('visualizationFrame');
+        
+        // Toggle dropdown
+        dropdownTrigger.addEventListener('click', function() {
+            const isActive = dropdownMenu.classList.contains('active');
+            dropdownMenu.classList.toggle('active');
+            dropdownTrigger.classList.toggle('active');
+        });
+        
+        // Handle dropdown item selection
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                const text = this.textContent;
+                
+                // Update dropdown text
+                dropdownText.textContent = text;
+                
+                // Close dropdown
+                dropdownMenu.classList.remove('active');
+                dropdownTrigger.classList.remove('active');
+                
+                // Update visualization frame content
+                updateVisualizationFrame(value, text);
+            });
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.custom-dropdown')) {
+                dropdownMenu.classList.remove('active');
+                dropdownTrigger.classList.remove('active');
+            }
+        });
+        
+        // Update visualization frame based on selection
+        function updateVisualizationFrame(value, title) {
+            const placeholderContent = visualizationFrame.querySelector('.placeholder-content');
+            const placeholderTitle = placeholderContent.querySelector('.placeholder-title');
+            const placeholderDescription = placeholderContent.querySelector('.placeholder-description');
+            
+            // Update content based on selection
+            const content = {
+                architecture: {
+                    title: 'Architecture Overview',
+                    description: 'Interactive visualization of Lucy14b neural network architecture and data flow'
+                },
+                performance: {
+                    title: 'Performance Metrics',
+                    description: 'Real-time performance benchmarks and inference speed comparisons'
+                },
+                training: {
+                    title: 'Training Process',
+                    description: 'Training methodology, data pipeline, and optimization techniques'
+                },
+                benchmarks: {
+                    title: 'Benchmark Results',
+                    description: 'Comprehensive evaluation results across multiple AI benchmarks'
+                },
+                comparisons: {
+                    title: 'Model Comparisons',
+                    description: 'Side-by-side comparison with other state-of-the-art language models'
+                }
+            };
+            
+            if (content[value]) {
+                placeholderTitle.textContent = content[value].title;
+                placeholderDescription.textContent = content[value].description;
+            }
+            
+            // Add subtle animation
+            visualizationFrame.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                visualizationFrame.style.transform = 'scale(1)';
+            }, 150);
+        }
     </script>
 </body>
 </html>
