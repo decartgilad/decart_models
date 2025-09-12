@@ -10,7 +10,7 @@ export const LUCY14B_CONFIG = {
   id: 'lucy14b',
   name: 'Lucy 14B',
   api: {
-    endpoint: 'fal-ai/ltx-video',  // Try the correct endpoint
+    endpoint: 'fal-ai/wan/v2.2-a14b/image-to-video',
     baseUrl: process.env.FAL_BASE_URL || 'https://fal.run',
     timeout: 300000, // 5 minutes - video generation can take time
   },
