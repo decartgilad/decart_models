@@ -177,8 +177,14 @@ export class Lucy14bProvider implements AIProvider {
       
       return { kind: 'deferred', providerJobId: data.request_id || `lucy14b_${Date.now()}` }
     } catch (error) {
-      console.error('❌ Lucy14b: Job submission failed', error)
-      throw error
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      console.error('❌ Lucy14b: Job submission failed', {
+        error: errorMsg,
+        stack: error instanceof Error ? error.stack : undefined,
+        apiKey: apiKey ? 'present' : 'missing',
+        url: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`
+      })
+      throw new Error(`Lucy14b API failed: ${errorMsg}`)
     }
   }
 

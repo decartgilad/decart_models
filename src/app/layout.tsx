@@ -29,7 +29,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReactQueryProvider>
-        <div className="mx-auto max-w-[1550px]  px-xl">
+        <div className="mx-auto max-w-[1500px]  px-xl">
   {children}
 </div>        </ReactQueryProvider>
       </body>

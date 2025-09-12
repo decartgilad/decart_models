@@ -24,7 +24,7 @@ export default function ModelsLayout({ children }: { children: React.ReactNode }
       <div className="pt-24 flex" style={{ height: 'calc(100vh - 96px)' }}>
         <div className="flex w-full px-xl">
           <SidebarModels />
-          <main className="flex-1 py-xl pl-xl overflow-hidden flex flex-col justify-start max-w-5xl mx-auto">
+          <main className="flex-1 py-xl pl-xl overflow-hidden flex flex-col justify-start max-w-5xl mx-auto min-h-0">
             {children}
           </main>
         </div>

@@ -30,7 +30,12 @@ export function useJobStatus(
   // Job status query with conditional auto-refresh and model scoping
   const query = useQuery({
     queryKey: jobQueryKeys.byId(model.code, jobId || ''),  // Model scoped
-    queryFn: () => getJobStatus(jobId!, { modelCode: model.code }),
+    queryFn: async () => {
+      console.log('🔍 Fetching job status', { jobId, model: model.code })
+      const result = await getJobStatus(jobId!, { modelCode: model.code })
+      console.log('📊 Job status result', { jobId, status: result.status, error: result.error })
+      return result
+    },
     enabled: enabled && !!jobId,
     refetchInterval: (query) => {
       // Only auto-refresh if enabled and job is not in terminal state
@@ -43,6 +48,11 @@ export function useJobStatus(
       
       const isTerminal = ['succeeded', 'failed'].includes(jobStatus.status)
       
+      console.log('🔄 Job status polling', { 
+        status: jobStatus.status, 
+        isTerminal, 
+        willContinuePolling: !isTerminal 
+      })
       
       return isTerminal ? false : 2000
     },
