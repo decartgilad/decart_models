@@ -102,6 +102,27 @@ export function isConfigured(): boolean {
   return hasApiKey && hasBaseUrl
 }
 
+// Helper function to check if FAL job exists
+async function checkFalJobExists(jobId: string): Promise<boolean> {
+  try {
+    const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
+    const statusUrl = `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}/requests/${jobId}`
+    
+    const response = await fetch(statusUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Key ${apiKey}`,
+      },
+      signal: AbortSignal.timeout(5000)
+    })
+    
+    return response.ok || response.status !== 404
+  } catch (error) {
+    console.log('🔍 Lucy14b: Could not check FAL job existence', error)
+    return false
+  }
+}
+
 // Provider Implementation
 export class Lucy14bProvider implements AIProvider {
   name = 'lucy14b'
@@ -224,10 +245,34 @@ export class Lucy14bProvider implements AIProvider {
         if (jobAge < 120000) { // Less than 2 minutes old
           console.log('🔄 Lucy14b: Attempting resubmission for timeout job')
           try {
-            const resubmitResult = await this.run(input)
-            if (resubmitResult.kind === 'deferred' && resubmitResult.providerJobId && !resubmitResult.providerJobId.startsWith('lucy14b_')) {
-              console.log('✅ Lucy14b: Resubmission successful, got real job ID')
-              return this.result(resubmitResult.providerJobId, input)
+            // Try direct FAL submission without going through this.run() to avoid loops
+            const payload = {
+              image_url: input.file.signedUrl,
+              prompt: input.prompt || 'Generate smooth video from image',
+              duration: input.duration || 4,
+              enable_safety_checker: false,
+              sync: false
+            }
+
+            const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
+            const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Key ${apiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload),
+              signal: AbortSignal.timeout(20000) // Shorter timeout for resubmission
+            })
+
+            if (response.ok) {
+              const data = await response.json()
+              if (data.request_id) {
+                console.log('✅ Lucy14b: Resubmission successful, got real job ID:', data.request_id)
+                return this.result(data.request_id, input)
+              }
+            } else {
+              console.log('❌ Lucy14b: Resubmission failed with status:', response.status)
             }
           } catch (error) {
             console.log('❌ Lucy14b: Resubmission failed', error)
@@ -240,12 +285,14 @@ export class Lucy14bProvider implements AIProvider {
       const jobAge = Date.now() - timestamp
       
       if (jobAge > 300000) { // 5 minutes
+        console.log('⏰ Lucy14b: Fallback job timed out after 5 minutes')
         return {
           status: 'failed',
-          error: 'Job submission failed and could not be recovered. Please try again.'
+          error: 'Job submission failed and could not be recovered. Please try again with a different image or simpler prompt.'
         }
       }
       
+      console.log('⏳ Lucy14b: Fallback job still waiting...', { jobAge: Math.round(jobAge / 1000) + 's' })
       return { status: 'running' } // Keep trying for a while
     }
 
