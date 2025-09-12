@@ -121,13 +121,22 @@ export async function POST(request: NextRequest) {
       }
     } catch (providerError) {
       // Provider failed - update job to failed
-      logProviderOperation(requestId, providerName, 'run', 'error', providerError instanceof Error ? providerError.message : 'Unknown provider error')
+      const errorMessage = providerError instanceof Error ? providerError.message : 'Unknown provider error'
+      logProviderOperation(requestId, providerName, 'run', 'error', errorMessage)
+      
+      // Log detailed error for debugging
+      console.error('🔥 Provider Error Details:', {
+        provider: providerName,
+        error: errorMessage,
+        stack: providerError instanceof Error ? providerError.stack : undefined,
+        requestId
+      })
       
       const { error: updateError } = await supabaseAdmin
         .from('jobs')
         .update({
           status: JOB_STATUS.FAILED,
-          error: 'Provider failed to start processing'
+          error: `Provider failed: ${errorMessage}`
         })
         .eq('id', jobId)
 
