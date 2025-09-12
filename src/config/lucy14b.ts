@@ -142,16 +142,54 @@ export class Lucy14bProvider implements AIProvider {
         endpoint: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`
       })
       
-      // Submit async job to FAL - this should return quickly with request_id
-      const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(15000) // 15 seconds should be enough for async submission
-      })
+      // Submit async job to FAL with retry logic
+      let response: Response | undefined
+      const maxRetries = 2
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`🔄 Lucy14b: Attempt ${attempt}/${maxRetries}`)
+          
+          response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Key ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(30000) // 30 seconds for async submission
+          })
+          
+          // If successful, break out of retry loop
+          if (response.ok) break
+          
+          // If not the last attempt and got 5xx error, retry
+          if (attempt < maxRetries && response.status >= 500) {
+            console.log(`⚠️ Lucy14b: Server error ${response.status}, retrying in 2s...`)
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            continue
+          }
+          
+          break // Don't retry for client errors (4xx)
+          
+        } catch (error) {
+          if (attempt === maxRetries) throw error
+          
+          if (error instanceof Error && error.name === 'TimeoutError') {
+            console.log(`⚠️ Lucy14b: Timeout on attempt ${attempt}, retrying in 2s...`)
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            continue
+          }
+          
+          throw error // Don't retry for other errors
+        }
+      }
+
+      if (!response || !response.ok) {
+        const errorMsg = response ? `${response.status} ${response.statusText}` : 'No response received'
+        console.error('❌ Lucy14b: All retry attempts failed', { error: errorMsg })
+        throw new Error(`FAL API submission failed after ${maxRetries} attempts: ${errorMsg}`)
+      }
 
       if (!response.ok) {
         const errorText = await response.text()
