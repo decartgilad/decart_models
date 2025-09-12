@@ -54,25 +54,26 @@ export interface MirageLSDOutput {
 
 // Validation
 function validateInput(input: unknown): { valid: boolean; error?: string } {
+  const inputData = input as any
   console.log('🔍 MirageLSD: Validating input', {
-    hasFile: !!input.file,
-    hasSignedUrl: !!input.file?.signedUrl,
-    fileSize: input.file?.size,
-    promptLength: input.prompt?.length || 0,
-    modelCode: input.modelCode,
-    generationsCount: input.generationsCount
+    hasFile: !!inputData.file,
+    hasSignedUrl: !!inputData.file?.signedUrl,
+    fileSize: inputData.file?.size,
+    promptLength: inputData.prompt?.length || 0,
+    modelCode: inputData.modelCode,
+    generationsCount: inputData.generationsCount
   })
 
   // Check model code
-  if (input.modelCode !== 'MirageLSD') {
-    return { valid: false, error: `Invalid model code: ${input.modelCode}. Expected: MirageLSD` }
+  if (inputData.modelCode !== 'MirageLSD') {
+    return { valid: false, error: `Invalid model code: ${inputData.modelCode}. Expected: MirageLSD` }
   }
 
   // Check file
-  if (!input.file?.signedUrl) return { valid: false, error: 'Video file with signed URL required' }
+  if (!inputData.file?.signedUrl) return { valid: false, error: 'Video file with signed URL required' }
   
   // Check file size
-  const fileSizeMB = input.file.size / (1024 * 1024)
+  const fileSizeMB = inputData.file.size / (1024 * 1024)
   if (fileSizeMB > MIRAGELSD_CONFIG.limits.maxFileSizeMB) {
     return { valid: false, error: `File too large (${fileSizeMB.toFixed(1)}MB max ${MIRAGELSD_CONFIG.limits.maxFileSizeMB}MB)` }
   }
@@ -80,22 +81,22 @@ function validateInput(input: unknown): { valid: boolean; error?: string } {
   // Check file type - only video files for MirageLSD
   const allowedVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo', 'video/webm']
   
-  if (!allowedVideoTypes.includes(input.file.mime)) {
-    return { valid: false, error: `Unsupported file type: ${input.file.mime}. Allowed: ${allowedVideoTypes.join(', ')}` }
+  if (!allowedVideoTypes.includes(inputData.file.mime)) {
+    return { valid: false, error: `Unsupported file type: ${inputData.file.mime}. Allowed: ${allowedVideoTypes.join(', ')}` }
   }
   
   // Check prompt
-  if (!input.prompt || input.prompt.trim().length === 0) {
+  if (!inputData.prompt || inputData.prompt.trim().length === 0) {
     return { valid: false, error: 'Prompt is required for video transformation' }
   }
   
-  if (input.prompt.length > MIRAGELSD_CONFIG.limits.maxPromptLength) {
+  if (inputData.prompt.length > MIRAGELSD_CONFIG.limits.maxPromptLength) {
     return { valid: false, error: `Prompt too long (max ${MIRAGELSD_CONFIG.limits.maxPromptLength} chars)` }
   }
   
   // Check generationsCount (optional, defaults to 1)
-  if (input.generationsCount !== undefined) {
-    if (!Number.isInteger(input.generationsCount) || input.generationsCount < 1 || input.generationsCount > 10) {
+  if (inputData.generationsCount !== undefined) {
+    if (!Number.isInteger(inputData.generationsCount) || inputData.generationsCount < 1 || inputData.generationsCount > 10) {
       return { valid: false, error: 'generationsCount must be an integer between 1 and 10' }
     }
   }
@@ -250,9 +251,9 @@ export class MirageLSDProvider implements AIProvider {
     const jobId = `miragelsd_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     console.log('🚀 MirageLSD: Job queued', { 
       jobId, 
-      hasFile: !!input.file,
-      promptLength: input.prompt.length,
-      generationsCount: input.generationsCount || 1
+      hasFile: !!(input as any).file,
+      promptLength: (input as any).prompt.length,
+      generationsCount: (input as any).generationsCount || 1
     })
     
     return { kind: 'deferred', providerJobId: jobId }
@@ -265,9 +266,10 @@ export class MirageLSDProvider implements AIProvider {
 
     try {
       // Auto-detect orientation from file
-      const detectedOrientation = await detectFileOrientation(input.file.signedUrl!, input.file.mime)
+      const inputData = input as any
+      const detectedOrientation = await detectFileOrientation(inputData.file.signedUrl!, inputData.file.mime)
       const dimensions = getOutputDimensions(detectedOrientation)
-      const generationsCount = input.generationsCount || 1
+      const generationsCount = inputData.generationsCount || 1
       
       console.log('🎯 MirageLSD: Processing with parameters', {
         orientation: detectedOrientation,
@@ -276,11 +278,11 @@ export class MirageLSDProvider implements AIProvider {
       })
       
       // Convert file to FormData for multipart/form-data request
-      const formData = await fileToFormData(input.file.signedUrl!, input.prompt, generationsCount)
+      const formData = await fileToFormData(inputData.file.signedUrl!, inputData.prompt, generationsCount)
       
       console.log('📡 MirageLSD: Calling Mirage API', {
         url: MIRAGELSD_CONFIG.api.endpoint,
-        promptLength: input.prompt.length,
+        promptLength: inputData.prompt.length,
         generationsCount
       })
       
@@ -351,7 +353,7 @@ export class MirageLSDProvider implements AIProvider {
           height: dimensions.height,
           provider: 'miragelsd',
           model: 'mirage',
-          prompt: input.prompt,
+          prompt: inputData.prompt,
           generationsCount
         } as MirageLSDOutput
       }
