@@ -116,17 +116,6 @@ export class Lucy14bProvider implements AIProvider {
       throw new Error(validation.error)
     }
 
-    const jobId = `lucy14b_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    console.log('🚀 Lucy14b: Job queued', { jobId, hasFile: !!input.file })
-    
-    return { kind: 'deferred', providerJobId: jobId }
-  }
-
-  async result(jobId: string, input?: Lucy14bInput): Promise<ProviderStatusResult> {
-    if (!jobId.startsWith('lucy14b_') || !input) {
-      return { status: 'running' }
-    }
-
     try {
       const payload = {
         image_url: input.file.signedUrl,
@@ -136,20 +125,12 @@ export class Lucy14bProvider implements AIProvider {
       }
 
       const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
-      console.log('📡 Lucy14b: Calling FAL API', {
-        url: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`,
-        model: LUCY14B_CONFIG.api.endpoint,
+      console.log('🚀 Lucy14b: Starting async job', {
         hasApiKey: !!apiKey,
-        apiKeyPrefix: apiKey ? `${apiKey.substring(0, 10)}...` : 'missing',
-        payload: {
-          ...payload,
-          image_url: payload.image_url ? `${payload.image_url.substring(0, 80)}...` : 'none'
-        }
+        promptLength: payload.prompt.length
       })
       
-      // Log the full image URL for debugging (be careful with this in production)
-      console.log('🖼️ Lucy14b: Full image URL:', payload.image_url)
-      
+      // Submit async job to FAL
       const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
         method: 'POST',
         headers: {
@@ -157,25 +138,70 @@ export class Lucy14bProvider implements AIProvider {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(25000) // 25 seconds - much shorter for Vercel
+        signal: AbortSignal.timeout(10000) // 10 seconds for job submission
       })
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('❌ Lucy14b: FAL API Error Response', {
+        console.error('❌ Lucy14b: Failed to submit job', {
           status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          body: errorText
+          error: errorText
         })
-        throw new Error(`FAL API error (${response.status}): ${errorText}`)
+        throw new Error(`Failed to submit job: ${response.status} ${errorText}`)
       }
 
       const data = await response.json()
-      console.log('✅ Lucy14b: FAL API Response', data)
+      console.log('✅ Lucy14b: Job submitted', { requestId: data.request_id })
       
-      // FAL returns the video immediately
-      if (data.video?.url) {
+      return { kind: 'deferred', providerJobId: data.request_id || `lucy14b_${Date.now()}` }
+    } catch (error) {
+      console.error('❌ Lucy14b: Job submission failed', error)
+      throw error
+    }
+  }
+
+  async result(jobId: string, input?: Lucy14bInput): Promise<ProviderStatusResult> {
+    if (!jobId || !input) {
+      return { status: 'running' }
+    }
+
+    // If it's our old format, still return running
+    if (jobId.startsWith('lucy14b_')) {
+      return { status: 'running' }
+    }
+
+    try {
+      const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
+      console.log('📡 Lucy14b: Checking job status', { jobId })
+      
+      // Check job status using FAL's status endpoint
+      const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}/status?request_id=${jobId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Key ${apiKey}`,
+        },
+        signal: AbortSignal.timeout(5000) // 5 seconds for status check
+      })
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Job not found or still running
+          return { status: 'running' }
+        }
+        
+        const errorText = await response.text()
+        console.error('❌ Lucy14b: Status check failed', {
+          status: response.status,
+          error: errorText
+        })
+        return { status: 'running' } // Keep trying
+      }
+
+      const data = await response.json()
+      console.log('📊 Lucy14b: Status response', data)
+      
+      // Check if job is completed
+      if (data.status === 'COMPLETED' && data.video?.url) {
         console.log('🎬 Lucy14b: Video generated successfully')
         return {
           status: 'succeeded',
@@ -191,11 +217,14 @@ export class Lucy14bProvider implements AIProvider {
             prompt: input.prompt,
           } as Lucy14bOutput
         }
-      } else {
+      } else if (data.status === 'FAILED' || data.status === 'ERROR') {
         return {
           status: 'failed',
-          error: 'Video generation completed but no video URL found'
+          error: data.error || 'Video generation failed'
         }
+      } else {
+        // Still running
+        return { status: 'running' }
       }
 
     } catch (error) {
