@@ -10,7 +10,7 @@ export const LUCY14B_CONFIG = {
   id: 'lucy14b',
   name: 'Lucy 14B',
   api: {
-    endpoint: 'fal-ai/wan/v2.2-a14b/image-to-video',
+    endpoint: 'fal-ai/ltx-video',  // Try the correct endpoint
     baseUrl: process.env.FAL_BASE_URL || 'https://fal.run',
     timeout: 300000, // 5 minutes - video generation can take time
   },
@@ -107,12 +107,21 @@ export class Lucy14bProvider implements AIProvider {
   name = 'lucy14b'
 
   async run(input: Lucy14bInput): Promise<ProviderRunResult> {
+    console.log('🔧 Lucy14b: Starting run function', { 
+      modelCode: input.modelCode,
+      hasFile: !!input.file,
+      hasSignedUrl: !!input.file?.signedUrl,
+      prompt: input.prompt?.substring(0, 50) + '...'
+    })
+
     if (!isConfigured()) {
+      console.error('❌ Lucy14b: Not configured - missing environment variables')
       throw new Error('Lucy14b not configured - missing FAL_API_KEY')
     }
 
     const validation = validateInput(input)
     if (!validation.valid) {
+      console.error('❌ Lucy14b: Input validation failed', validation.error)
       throw new Error(validation.error)
     }
 
@@ -147,13 +156,24 @@ export class Lucy14bProvider implements AIProvider {
         const errorText = await response.text()
         console.error('❌ Lucy14b: Failed to submit job', {
           status: response.status,
-          error: errorText
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          error: errorText,
+          url: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`,
+          payload: {
+            ...payload,
+            image_url: payload.image_url ? `${payload.image_url.substring(0, 50)}...` : 'missing'
+          }
         })
-        throw new Error(`Failed to submit job: ${response.status} ${errorText}`)
+        throw new Error(`FAL API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
       const data = await response.json()
-      console.log('✅ Lucy14b: Job submitted', { requestId: data.request_id })
+      console.log('✅ Lucy14b: Job submitted successfully', { 
+        requestId: data.request_id,
+        status: data.status,
+        fullResponse: data 
+      })
       
       return { kind: 'deferred', providerJobId: data.request_id || `lucy14b_${Date.now()}` }
     } catch (error) {
