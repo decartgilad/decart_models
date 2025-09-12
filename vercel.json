@@ -5,7 +5,7 @@
       "maxDuration": 30
     },
     "src/app/api/jobs/route.ts": { 
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "src/app/api/jobs/[id]/route.ts": { 
       "maxDuration": 10

@@ -142,65 +142,50 @@ export class Lucy14bProvider implements AIProvider {
         endpoint: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`
       })
       
-      // Submit async job to FAL with retry logic
+      // Submit async job to FAL with single attempt and shorter timeout
       let response: Response | undefined
-      const maxRetries = 2
       
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          console.log(`🔄 Lucy14b: Attempt ${attempt}/${maxRetries}`)
-          
-          response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Key ${apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(30000) // 30 seconds for async submission
+      try {
+        console.log(`🚀 Lucy14b: Submitting to FAL API`)
+        
+        response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Key ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(25000) // 25 seconds - must be less than vercel timeout
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('❌ Lucy14b: FAL API error', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
           })
           
-          // If successful, break out of retry loop
-          if (response.ok) break
-          
-          // If not the last attempt and got 5xx error, retry
-          if (attempt < maxRetries && response.status >= 500) {
-            console.log(`⚠️ Lucy14b: Server error ${response.status}, retrying in 2s...`)
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            continue
+          // For server errors, still return deferred - let status polling handle it
+          if (response.status >= 500) {
+            console.log('⚠️ Lucy14b: Server error, returning fallback job ID for status polling')
+            return { kind: 'deferred', providerJobId: `lucy14b_fallback_${Date.now()}` }
           }
           
-          break // Don't retry for client errors (4xx)
-          
-        } catch (error) {
-          if (attempt === maxRetries) throw error
-          
-          if (error instanceof Error && error.name === 'TimeoutError') {
-            console.log(`⚠️ Lucy14b: Timeout on attempt ${attempt}, retrying in 2s...`)
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            continue
-          }
-          
-          throw error // Don't retry for other errors
+          throw new Error(`FAL API error: ${response.status} ${response.statusText} - ${errorText}`)
         }
+        
+      } catch (error) {
+        if (error instanceof Error && error.name === 'TimeoutError') {
+          console.log('⚠️ Lucy14b: Timeout during submission, returning fallback job ID for status polling')
+          return { kind: 'deferred', providerJobId: `lucy14b_timeout_${Date.now()}` }
+        }
+        
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+        console.error('❌ Lucy14b: Submission failed', { error: errorMsg })
+        throw new Error(`Lucy14b submission failed: ${errorMsg}`)
       }
 
-      if (!response || !response.ok) {
-        const errorMsg = response ? `${response.status} ${response.statusText}` : 'No response received'
-        console.error('❌ Lucy14b: All retry attempts failed', { error: errorMsg })
-        throw new Error(`FAL API submission failed after ${maxRetries} attempts: ${errorMsg}`)
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('❌ Lucy14b: Failed to submit async job', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText,
-          url: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`
-        })
-        throw new Error(`FAL API error: ${response.status} ${response.statusText} - ${errorText}`)
-      }
 
       const data = await response.json()
       console.log('✅ Lucy14b: Async job submitted successfully', { 
@@ -227,10 +212,41 @@ export class Lucy14bProvider implements AIProvider {
       return { status: 'running' }
     }
 
-    // Handle fallback jobs (if FAL didn't return request_id)
-    if (jobId.startsWith('fallback_') || jobId.startsWith('lucy14b_')) {
-      console.log('🔍 Lucy14b: Fallback job - cannot check real status', { jobId })
-      return { status: 'running' } // Keep running indefinitely for fallback jobs
+    // Handle fallback/timeout jobs - try to resubmit or mark as failed
+    if (jobId.startsWith('lucy14b_fallback_') || jobId.startsWith('lucy14b_timeout_')) {
+      console.log('🔍 Lucy14b: Fallback/timeout job detected', { jobId })
+      
+      // For timeout jobs, try to resubmit once if job is recent (< 2 minutes old)
+      if (jobId.startsWith('lucy14b_timeout_') && input) {
+        const timestamp = parseInt(jobId.split('_').pop() || '0')
+        const jobAge = Date.now() - timestamp
+        
+        if (jobAge < 120000) { // Less than 2 minutes old
+          console.log('🔄 Lucy14b: Attempting resubmission for timeout job')
+          try {
+            const resubmitResult = await this.run(input)
+            if (resubmitResult.kind === 'deferred' && resubmitResult.providerJobId && !resubmitResult.providerJobId.startsWith('lucy14b_')) {
+              console.log('✅ Lucy14b: Resubmission successful, got real job ID')
+              return this.result(resubmitResult.providerJobId, input)
+            }
+          } catch (error) {
+            console.log('❌ Lucy14b: Resubmission failed', error)
+          }
+        }
+      }
+      
+      // After some time, mark fallback jobs as failed
+      const timestamp = parseInt(jobId.split('_').pop() || '0')
+      const jobAge = Date.now() - timestamp
+      
+      if (jobAge > 300000) { // 5 minutes
+        return {
+          status: 'failed',
+          error: 'Job submission failed and could not be recovered. Please try again.'
+        }
+      }
+      
+      return { status: 'running' } // Keep trying for a while
     }
 
     try {
