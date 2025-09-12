@@ -87,13 +87,15 @@ function validateInput(input: any): { valid: boolean; error?: string } {
 
 // Environment check
 export function isConfigured(): boolean {
-  const hasApiKey = !!process.env.FAL_API_KEY
+  const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
+  const hasApiKey = !!apiKey
   const hasBaseUrl = !!process.env.FAL_BASE_URL
   
   console.log('🔧 Lucy14b: Environment check', {
     hasApiKey,
     hasBaseUrl,
     baseUrl: process.env.FAL_BASE_URL,
+    apiKeySource: process.env.FAL_API_KEY ? 'FAL_API_KEY' : (process.env.FAL_KEY ? 'FAL_KEY' : 'missing'),
     configured: hasApiKey && hasBaseUrl
   })
   
@@ -133,11 +135,12 @@ export class Lucy14bProvider implements AIProvider {
         enable_safety_checker: false,
       }
 
+      const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
       console.log('📡 Lucy14b: Calling FAL API', {
         url: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`,
         model: LUCY14B_CONFIG.api.endpoint,
-        hasApiKey: !!process.env.FAL_API_KEY,
-        apiKeyPrefix: process.env.FAL_API_KEY ? `${process.env.FAL_API_KEY.substring(0, 10)}...` : 'missing',
+        hasApiKey: !!apiKey,
+        apiKeyPrefix: apiKey ? `${apiKey.substring(0, 10)}...` : 'missing',
         payload: {
           ...payload,
           image_url: payload.image_url ? `${payload.image_url.substring(0, 80)}...` : 'none'
@@ -150,7 +153,7 @@ export class Lucy14bProvider implements AIProvider {
       const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Key ${process.env.FAL_API_KEY}`,
+          'Authorization': `Key ${apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload),
