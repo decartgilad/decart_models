@@ -122,12 +122,14 @@ export class Lucy14bProvider implements AIProvider {
         prompt: input.prompt || 'Generate smooth video from image',
         duration: input.duration || 4,
         enable_safety_checker: false,
+        sync: false // Request async processing
       }
 
       const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
       console.log('🚀 Lucy14b: Starting async job', {
         hasApiKey: !!apiKey,
-        promptLength: payload.prompt.length
+        promptLength: payload.prompt.length,
+        imageUrl: input.file.signedUrl ? 'present' : 'missing'
       })
       
       // Submit async job to FAL
@@ -174,8 +176,8 @@ export class Lucy14bProvider implements AIProvider {
       const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
       console.log('📡 Lucy14b: Checking job status', { jobId })
       
-      // Check job status using FAL's status endpoint
-      const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}/status?request_id=${jobId}`, {
+      // Check job status using FAL's requests endpoint
+      const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}/requests/${jobId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Key ${apiKey}`,
