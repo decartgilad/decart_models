@@ -127,10 +127,11 @@ export class Lucy14bProvider implements AIProvider {
 
     // For now, let's just create a mock job ID and let the webhook handle it
     const mockJobId = `lucy14b_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    console.log('🚀 Lucy14b: Creating mock job (will implement real FAL async later)', {
+    console.log('🚀 Lucy14b: Creating MOCK job - no FAL API call!', {
       mockJobId,
       hasFile: !!input.file,
-      prompt: input.prompt
+      prompt: input.prompt,
+      timestamp: new Date().toISOString()
     })
     
     // Return immediately with mock job ID
