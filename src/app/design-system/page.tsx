@@ -274,12 +274,12 @@ export default function DesignSystemPage() {
                   />
                 </div>
                 <div className="font-mono text-xs text-subfg leading-loose space-y-1">
-                  <div>Width: 437px, Min-height: 77px, Radius: 5px</div>
-                  <div>Swatch: 68×68px (radius 7px)</div>
+                  <div>Width: 350px, Min-height: 62px, Radius: 5px</div>
+                  <div>Swatch: 54×54px (radius 6px)</div>
                   <div>Border: White when selected</div>
                   <div>Layout: Text center-aligned, icon top-aligned</div>
-                  <div>Icon: Custom arrow SVG (11×11px) at top</div>
-                  <div>Font: TT Commons 22px title, 18px subtitle</div>
+                  <div>Icon: Custom arrow SVG (9×9px) at top</div>
+                  <div>Font: TT Commons 18px title, 14px subtitle</div>
                   <div>Title: Multi-line allowed</div>
                   <div>Description: Single line, ellipsis overflow</div>
                 </div>
@@ -298,12 +298,12 @@ export default function DesignSystemPage() {
                   />
                 </div>
                 <div className="font-mono text-xs text-subfg leading-loose space-y-1">
-                  <div>Width: 437px, Min-height: 77px, Radius: 5px</div>
-                  <div>Swatch: 68×68px (radius 7px)</div>
+                  <div>Width: 350px, Min-height: 62px, Radius: 5px</div>
+                  <div>Swatch: 54×54px (radius 6px)</div>
                   <div>Border: Gray, Pink accent swatch</div>
                   <div>Layout: Center-aligned with arrow icon</div>
-                  <div>Icon: Custom arrow SVG (11×11px, dimmed)</div>
-                  <div>Font: TT Commons 22px title, 18px subtitle</div>
+                  <div>Icon: Custom arrow SVG (9×9px, dimmed)</div>
+                  <div>Font: TT Commons 18px title, 14px subtitle</div>
                   <div>Title: Multi-line allowed</div>
                   <div>Description: Single line, ellipsis overflow</div>
                 </div>
@@ -331,7 +331,7 @@ export default function DesignSystemPage() {
               </div>
               <div className="font-mono text-xs text-subfg leading-loose space-y-1">
                 <div>Layout: Flex items-end justify-between</div>
-                <div>Icon: 68×68px (radius 7px) - same as ModelCard</div>
+                <div>Icon: 54×54px (radius 6px) - same as ModelCard</div>
                 <div>Title: 46px TT Commons, tracking -0.04em</div>
                 <div>Description: 14px Replica Mono</div>
                 <div>Right label: 14px Replica Mono</div>

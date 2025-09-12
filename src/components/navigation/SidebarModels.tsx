@@ -10,7 +10,7 @@ export function SidebarModels() {
   const router = useRouter()
 
   return (
-    <aside className="w-[461px] py-xxl pr-xl h-full overflow-y-auto flex-shrink-0">
+    <aside className="w-[374px] py-xxl pr-xl h-full overflow-y-auto flex-shrink-0">
       <div className="space-y-xl">
         {/* Models Section */}
         <div>

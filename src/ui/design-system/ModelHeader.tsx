@@ -13,8 +13,8 @@ export function ModelHeader({
     <div className="flex items-end justify-between mb-xl">
       {/* Left side - swatch and title */}
       <div className="flex items-end gap-md">
-        {/* 68x68 icon or swatch */}
-        <div className={`w-[68px] h-[68px] rounded-[7px] flex-shrink-0 overflow-hidden ${!model.icon ? 'bg-primary' : ''}`}>
+        {/* 54x54 icon or swatch */}
+        <div className={`w-[54px] h-[54px] rounded-[6px] flex-shrink-0 overflow-hidden ${!model.icon ? 'bg-primary' : ''}`}>
           {model.icon ? (
             <img 
               src={model.icon} 

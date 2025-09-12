@@ -16,7 +16,7 @@ export default function ModelsLayout({ children }: { children: React.ReactNode }
             <TopBarWrapper />
           </div>
           {/* Vertical line connecting to sidebar */}
-          <div className="absolute bottom-0 w-px h-px  translate-y-full" style={{ left: 'calc(24px + 461px)', height: 'calc(100vh - 96px)' }}></div>
+          <div className="absolute bottom-0 w-px h-px  translate-y-full" style={{ left: 'calc(24px + 374px)', height: 'calc(100vh - 96px)' }}></div>
         </div>
       </div>
 
@@ -24,7 +24,7 @@ export default function ModelsLayout({ children }: { children: React.ReactNode }
       <div className="pt-24 flex" style={{ height: 'calc(100vh - 96px)' }}>
         <div className="flex w-full px-xl">
           <SidebarModels />
-          <main className="flex-1 py-xl pl-xl overflow-hidden flex flex-col justify-start max-w-5xl mx-auto min-h-0">
+          <main className="flex-1   overflow-hidden flex flex-col justify-start max-w-4xl mx-auto min-h-0">
             {children}
           </main>
         </div>

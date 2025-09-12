@@ -128,12 +128,12 @@ export function Sidebar({ selectedModelId, selectedFeatureId, onModelSelect, onF
                 }
               }}
             >
-              {/* Color swatch - 68x68 */}
-              <div className="w-[68px] h-[68px] bg-primary rounded-[6px] flex-shrink-0" />
+              {/* Color swatch - 54x54 */}
+              <div className="w-[54px] h-[54px] bg-primary rounded-[6px] flex-shrink-0" />
               
               {/* Text content */}
               <div className="flex-1 ml-md">
-                <h3 className="text-[22px] leading-[1.31] text-fg font-medium">{model.title}</h3>
+                <h3 className="text-[18px] leading-[1.31] text-fg font-medium">{model.title}</h3>
                 <p className="font-mono text-[14px] leading-[1.51] text-subfg">{model.subtitle}</p>
               </div>
               
@@ -179,11 +179,11 @@ export function Sidebar({ selectedModelId, selectedFeatureId, onModelSelect, onF
               }}
             >
               {/* Color swatch - accent color for features */}
-              <div className="w-[68px] h-[68px] bg-accent rounded-[6px] flex-shrink-0" />
+              <div className="w-[54px] h-[54px] bg-accent rounded-[6px] flex-shrink-0" />
               
               {/* Text content */}
               <div className="flex-1 ml-md">
-                <h3 className="text-[22px] leading-[1.31] text-fg font-medium">{feature.title}</h3>
+                <h3 className="text-[18px] leading-[1.31] text-fg font-medium">{feature.title}</h3>
                 <p className="font-mono text-[14px] leading-[1.51] text-subfg">{feature.subtitle}</p>
               </div>
               
