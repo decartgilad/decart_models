@@ -157,7 +157,7 @@ export class Lucy14bProvider implements AIProvider {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(LUCY14B_CONFIG.api.timeout)
+        signal: AbortSignal.timeout(25000) // 25 seconds - much shorter for Vercel
       })
 
       if (!response.ok) {
