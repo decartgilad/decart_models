@@ -157,7 +157,7 @@ export class Lucy14bProvider implements AIProvider {
           status: 'succeeded',
           output: {
             type: 'video',
-            url: 'https://example.com/mock-video.mp4', // Mock URL
+            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', // Working sample video
             format: 'mp4',
             width: 1280,
             height: 720,
