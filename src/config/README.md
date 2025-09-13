@@ -6,11 +6,12 @@
 - **Purpose**: High-quality image-to-video generation
 - **Provider**: FAL AI  
 - **Model**: `fal-ai/wan/v2.2-a14b/image-to-video`
-- **Mode**: Synchronous (90 second generation timeout)
+- **Mode**: Asynchronous (15 second submission timeout)
 - **Input**: Images (PNG/JPEG/WebP, max 10MB)
 - **Output**: MP4 videos (720p, 17-121 frames)
 - **Features**: 
-  - Direct video generation (no polling needed)
+  - Async job submission (Vercel compatible)
+  - Polling for results via webhooks
   - Comprehensive error handling with retry
   - Detailed logging for debugging
   - Automatic frame calculation from duration

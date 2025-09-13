@@ -186,7 +186,8 @@ export class Lucy14bProvider implements AIProvider {
       prompt: input.prompt?.substring(0, 100),
       fileSize: input.file?.size,
       duration: input.duration,
-      endpoint: FAL_ENDPOINT.split('/').pop() // Only log model name for security
+      endpoint: FAL_ENDPOINT.split('/').pop(), // Only log model name for security
+      mode: 'async'
     })
 
     // Configuration validation
@@ -223,10 +224,10 @@ export class Lucy14bProvider implements AIProvider {
           aspect_ratio: 'auto',
           enable_safety_checker: false,
           acceleration: 'regular',
-          video_quality: 'high'
-          // No sync parameter - FAL handles this automatically
+          video_quality: 'high',
+          sync: false // Force async mode for Vercel
         }),
-        signal: createTimeoutSignal(90000) // 90 seconds for full video generation
+        signal: createTimeoutSignal(15000) // 15 seconds for async submission (Vercel safe)
       })
 
       const submitTime = Date.now() - startTime
@@ -267,53 +268,59 @@ export class Lucy14bProvider implements AIProvider {
       const result = await response.json()
       // Log structured response for Vercel analytics
       const totalTime = Date.now() - startTime
-      console.log(`[${new Date().toISOString()}] FAL video generation completed:`, {
-        hasVideo: !!result.video?.url,
-        videoUrl: result.video?.url?.substring(0, 50) + '...',
-        prompt: result.prompt?.substring(0, 50),
-        seed: result.seed,
+      console.log(`[${new Date().toISOString()}] FAL async job submitted:`, {
+        hasRequestId: !!result.request_id,
+        status: result.status,
         totalTime: `${totalTime}ms`
       })
 
-      // Validate video generation response
-      if (!result.video?.url) {
-        console.error(`[${new Date().toISOString()}] FAL API missing video:`, {
-          responseKeys: Object.keys(result),
-          hasVideo: !!result.video,
-          videoKeys: result.video ? Object.keys(result.video) : []
-        })
-        throw new Error('FAL API did not return video - generation failed')
+      // Check if we got immediate result (sometimes happens with very simple requests)
+      if (result.video?.url) {
+        console.log(`[${new Date().toISOString()}] Got immediate video result`)
+        return {
+          kind: 'immediate',
+          output: {
+            type: 'video',
+            url: result.video.url,
+            format: 'mp4',
+            width: 1280,
+            height: 720,
+            duration_s: input.duration || 4,
+            provider: 'lucy14b',
+            model: FAL_MODEL_ID,
+            prompt: result.prompt || input.prompt || '',
+          } as Lucy14bOutput
+        }
       }
 
-      console.log(`[${new Date().toISOString()}] Video generation completed successfully`)
+      // Validate async response - should have request_id
+      if (!result.request_id) {
+        console.error(`[${new Date().toISOString()}] FAL API missing request_id:`, {
+          responseKeys: Object.keys(result),
+          hasStatus: !!result.status
+        })
+        throw new Error('FAL API did not return request_id - async submission failed')
+      }
+
+      console.log(`[${new Date().toISOString()}] Async job queued successfully - will poll for results`)
       return {
-        kind: 'immediate',
-        output: {
-          type: 'video',
-          url: result.video.url,
-          format: 'mp4',
-          width: 1280, // FAL returns 720p by default
-          height: 720,
-          duration_s: input.duration || 4,
-          provider: 'lucy14b',
-          model: FAL_MODEL_ID,
-          prompt: result.prompt || input.prompt || '',
-        } as Lucy14bOutput
+        kind: 'deferred',
+        providerJobId: result.request_id
       }
 
     } catch (error) {
       const totalTime = Date.now() - startTime
       
       if (error instanceof Error && error.name === 'TimeoutError') {
-        console.error(`[${new Date().toISOString()}] FAL video generation timeout:`, {
+        console.error(`[${new Date().toISOString()}] FAL async submission timeout:`, {
           timeoutAfter: `${totalTime}ms`,
-          maxTimeout: '90 seconds',
-          suggestion: 'Video generation took longer than expected'
+          maxTimeout: '15 seconds',
+          suggestion: 'FAL API may be overloaded or not responding'
         })
-        throw new Error('Video generation took too long (>90 seconds). This may happen with complex prompts or when the service is busy. Please try a shorter duration or simpler prompt.')
+        throw new Error('FAL API submission timeout - service may be overloaded. Please try again in a few minutes.')
       }
 
-      console.error(`[${new Date().toISOString()}] Lucy14b video generation failed:`, {
+      console.error(`[${new Date().toISOString()}] Lucy14b async submission failed:`, {
         error: error instanceof Error ? error.message : 'Unknown error',
         errorName: error instanceof Error ? error.name : 'Unknown',
         totalTime: `${totalTime}ms`,
