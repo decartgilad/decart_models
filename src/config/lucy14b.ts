@@ -51,7 +51,8 @@ export class Lucy14bProvider implements AIProvider {
   name = 'lucy14b'
 
   async run(input: Lucy14bInput): Promise<ProviderRunResult> {
-    console.log('🚀 Lucy14b: Starting video generation', { 
+    const startTime = Date.now()
+    console.log('🚀 Lucy14b: Quick async job submission', { 
       prompt: input.prompt,
       fileSize: input.file?.size 
     })
@@ -68,7 +69,7 @@ export class Lucy14bProvider implements AIProvider {
     const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
 
     try {
-      // Direct FAL API call - no complex logic
+      // FAST async submission with strict timeout
       const response = await fetch(FAL_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -80,21 +81,30 @@ export class Lucy14bProvider implements AIProvider {
           prompt: input.prompt || 'Create a smooth video animation',
           duration: input.duration || 4,
           enable_safety_checker: false,
-          sync: false // Async mode
-        })
+          sync: false // TRUE async - should return request_id quickly
+        }),
+        signal: AbortSignal.timeout(15000) // 15 seconds MAX for async submission
       })
+
+      const submitTime = Date.now() - startTime
+      console.log(`⚡ FAL response in ${submitTime}ms`)
 
       if (!response.ok) {
         const error = await response.text()
-        console.error('❌ FAL API error:', response.status, error)
-        throw new Error(`FAL API failed: ${response.status}`)
+        console.error('❌ FAL async submission failed:', response.status, error)
+        throw new Error(`FAL API failed: ${response.status} - ${error}`)
       }
 
       const result = await response.json()
-      console.log('✅ FAL job created:', result.request_id)
+      console.log('✅ FAL async job queued:', {
+        requestId: result.request_id,
+        status: result.status,
+        totalTime: `${Date.now() - startTime}ms`
+      })
 
       if (!result.request_id) {
-        throw new Error('FAL API did not return request_id')
+        console.error('❌ FAL missing request_id:', result)
+        throw new Error('FAL API did not return request_id - not truly async')
       }
 
       return { 
@@ -103,7 +113,17 @@ export class Lucy14bProvider implements AIProvider {
       }
 
     } catch (error) {
-      console.error('❌ Lucy14b submission failed:', error)
+      const totalTime = Date.now() - startTime
+      
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        console.error(`⏱️ FAL async submission timed out after ${totalTime}ms - FAL not responding as async`)
+        throw new Error('FAL API not responding quickly - may not be in async mode')
+      }
+
+      console.error('❌ Lucy14b async submission failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        totalTime: `${totalTime}ms`
+      })
       throw error
     }
   }
@@ -113,7 +133,8 @@ export class Lucy14bProvider implements AIProvider {
       return { status: 'failed', error: 'No job ID' }
     }
 
-    console.log('🔍 Lucy14b: Checking status for job:', jobId)
+    const startTime = Date.now()
+    console.log('🔍 Lucy14b: Fast status check for:', jobId)
 
     const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
     const statusUrl = `${FAL_ENDPOINT}/requests/${jobId}`
@@ -123,25 +144,32 @@ export class Lucy14bProvider implements AIProvider {
         method: 'GET',
         headers: {
           'Authorization': `Key ${apiKey}`,
-        }
+        },
+        signal: AbortSignal.timeout(8000) // 8 seconds for status check
       })
 
+      const checkTime = Date.now() - startTime
+      
       if (response.status === 404) {
-        console.log('⏳ Job not found yet, still processing...')
+        console.log(`⏳ Job queued/processing (${checkTime}ms)`)
         return { status: 'running' }
       }
 
       if (!response.ok) {
-        console.error('❌ FAL status check failed:', response.status)
+        console.error(`❌ FAL status error ${response.status} (${checkTime}ms)`)
         return { status: 'running' } // Keep trying
       }
 
       const data = await response.json()
-      console.log('📊 Job status:', data.status)
+      console.log(`📊 Job status: ${data.status} (${checkTime}ms)`)
 
       // Video is ready!
       if (data.status === 'COMPLETED' && data.video?.url) {
-        console.log('🎬 Video ready!', data.video.url)
+        console.log('🎬 Video completed!', {
+          url: data.video.url.substring(0, 50) + '...',
+          duration: data.video.duration,
+          checkTime: `${checkTime}ms`
+        })
         
         return {
           status: 'succeeded',
@@ -161,18 +189,31 @@ export class Lucy14bProvider implements AIProvider {
 
       // Job failed
       if (data.status === 'FAILED' || data.status === 'ERROR') {
-        console.error('💥 Job failed:', data.error)
+        console.error('💥 Job failed:', {
+          status: data.status,
+          error: data.error,
+          checkTime: `${checkTime}ms`
+        })
         return {
           status: 'failed',
           error: data.error || 'Video generation failed'
         }
       }
 
-      // Still processing
+      // Still processing - show progress if available
+      const progress = data.progress ? ` (${Math.round(data.progress * 100)}%)` : ''
+      console.log(`⏳ Processing${progress} (${checkTime}ms)`)
       return { status: 'running' }
 
     } catch (error) {
-      console.error('❌ Status check error:', error)
+      const checkTime = Date.now() - startTime
+      
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        console.error(`⏱️ Status check timeout (${checkTime}ms)`)
+        return { status: 'running' } // Keep trying
+      }
+
+      console.error(`❌ Status check error (${checkTime}ms):`, error)
       return { status: 'running' } // Keep trying
     }
   }
