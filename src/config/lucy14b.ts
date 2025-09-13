@@ -81,9 +81,9 @@ export class Lucy14bProvider implements AIProvider {
           prompt: input.prompt || 'Create a smooth video animation',
           duration: input.duration || 4,
           enable_safety_checker: false,
-          sync: false // TRUE async - should return request_id quickly
+          sync: true // FAL doesn't work truly async - use sync mode
         }),
-        signal: AbortSignal.timeout(15000) // 15 seconds MAX for async submission
+        signal: AbortSignal.timeout(50000) // 50 seconds for full video generation
       })
 
       const submitTime = Date.now() - startTime
@@ -96,31 +96,42 @@ export class Lucy14bProvider implements AIProvider {
       }
 
       const result = await response.json()
-      console.log('✅ FAL async job queued:', {
-        requestId: result.request_id,
-        status: result.status,
+      console.log('✅ FAL sync generation completed:', {
+        hasVideo: !!result.video?.url,
+        videoUrl: result.video?.url?.substring(0, 50) + '...',
         totalTime: `${Date.now() - startTime}ms`
       })
 
-      if (!result.request_id) {
-        console.error('❌ FAL missing request_id:', result)
-        throw new Error('FAL API did not return request_id - not truly async')
+      // In sync mode, we get the video directly
+      if (result.video?.url) {
+        return {
+          kind: 'immediate',
+          output: {
+            type: 'video',
+            url: result.video.url,
+            format: 'mp4',
+            width: result.video.width || 1280,
+            height: result.video.height || 720,
+            duration_s: input.duration || 4,
+            provider: 'lucy14b',
+            model: 'fal-ai/wan/v2.2-a14b/image-to-video',
+            prompt: input.prompt || '',
+          } as Lucy14bOutput
+        }
       }
 
-      return { 
-        kind: 'deferred', 
-        providerJobId: result.request_id 
-      }
+      console.error('❌ FAL sync mode missing video:', result)
+      throw new Error('FAL sync generation failed - no video returned')
 
     } catch (error) {
       const totalTime = Date.now() - startTime
       
       if (error instanceof Error && error.name === 'TimeoutError') {
-        console.error(`⏱️ FAL async submission timed out after ${totalTime}ms - FAL not responding as async`)
-        throw new Error('FAL API not responding quickly - may not be in async mode')
+        console.error(`⏱️ FAL sync generation timed out after ${totalTime}ms`)
+        throw new Error('Video generation took too long (>50 seconds)')
       }
 
-      console.error('❌ Lucy14b async submission failed:', {
+      console.error('❌ Lucy14b sync generation failed:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         totalTime: `${totalTime}ms`
       })
