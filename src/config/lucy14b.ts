@@ -102,243 +102,210 @@ export function isConfigured(): boolean {
   return hasApiKey && hasBaseUrl
 }
 
-// Helper function to check if FAL job exists
-async function checkFalJobExists(jobId: string): Promise<boolean> {
-  try {
-    const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
-    const statusUrl = `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}/requests/${jobId}`
-    
-    const response = await fetch(statusUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Key ${apiKey}`,
-      },
-      signal: AbortSignal.timeout(5000)
-    })
-    
-    return response.ok || response.status !== 404
-  } catch (error) {
-    console.log('🔍 Lucy14b: Could not check FAL job existence', error)
-    return false
-  }
-}
-
 // Provider Implementation
 export class Lucy14bProvider implements AIProvider {
   name = 'lucy14b'
 
   async run(input: Lucy14bInput): Promise<ProviderRunResult> {
-    console.log('🔧 Lucy14b: Starting run function', { 
+    const startTime = Date.now()
+    console.log('🚀 [LUCY14B-RUN] Starting job submission', { 
       modelCode: input.modelCode,
-      hasFile: !!input.file,
-      hasSignedUrl: !!input.file?.signedUrl,
-      prompt: input.prompt?.substring(0, 50) + '...'
+      fileSize: input.file?.size,
+      prompt: input.prompt,
+      duration: input.duration || 4,
+      timestamp: new Date().toISOString()
     })
 
+    // Step 1: Configuration check
     if (!isConfigured()) {
-      console.error('❌ Lucy14b: Not configured - missing environment variables')
+      console.error('❌ [LUCY14B-RUN] Configuration failed - missing FAL API key')
       throw new Error('Lucy14b not configured - missing FAL_API_KEY')
     }
+    console.log('✅ [LUCY14B-RUN] Configuration valid')
 
+    // Step 2: Input validation
     const validation = validateInput(input)
     if (!validation.valid) {
-      console.error('❌ Lucy14b: Input validation failed', validation.error)
+      console.error('❌ [LUCY14B-RUN] Input validation failed:', validation.error)
       throw new Error(validation.error)
     }
+    console.log('✅ [LUCY14B-RUN] Input validation passed')
+
+    // Step 3: Prepare FAL payload
+    const payload = {
+      image_url: input.file.signedUrl,
+      prompt: input.prompt || 'Generate smooth video from image',
+      duration: input.duration || 4,
+      enable_safety_checker: false,
+      sync: false
+    }
+    
+    const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
+    const endpoint = `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`
+    
+    console.log('📤 [LUCY14B-RUN] Sending request to FAL', {
+      endpoint,
+      payloadSize: JSON.stringify(payload).length,
+      hasApiKey: !!apiKey,
+      apiKeyPrefix: apiKey ? apiKey.substring(0, 8) + '...' : 'missing'
+    })
 
     try {
-      const payload = {
-        image_url: input.file.signedUrl,
-        prompt: input.prompt || 'Generate smooth video from image',
-        duration: input.duration || 4,
-        enable_safety_checker: false,
-        sync: false // IMPORTANT: This makes it async!
-      }
-
-      const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
-      console.log('🚀 Lucy14b: Submitting ASYNC job to FAL', {
-        hasApiKey: !!apiKey,
-        promptLength: payload.prompt.length,
-        imageUrl: input.file.signedUrl ? 'present' : 'missing',
-        endpoint: `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`
+      // Step 4: Submit to FAL API
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(25000)
       })
-      
-      // Submit async job to FAL with single attempt and shorter timeout
-      let response: Response | undefined
-      
-      try {
-        console.log(`🚀 Lucy14b: Submitting to FAL API`)
-        
-        response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Key ${apiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(25000) // 25 seconds - must be less than vercel timeout
+
+      const responseTime = Date.now() - startTime
+      console.log('📨 [LUCY14B-RUN] FAL API response received', {
+        status: response.status,
+        statusText: response.statusText,
+        responseTime: `${responseTime}ms`,
+        contentType: response.headers.get('content-type')
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ [LUCY14B-RUN] FAL API rejected request', {
+          status: response.status,
+          statusText: response.statusText,
+          errorBody: errorText,
+          responseTime: `${responseTime}ms`
         })
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('❌ Lucy14b: FAL API error', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorText
-          })
-          
-          // For server errors, still return deferred - let status polling handle it
-          if (response.status >= 500) {
-            console.log('⚠️ Lucy14b: Server error, returning fallback job ID for status polling')
-            return { kind: 'deferred', providerJobId: `lucy14b_fallback_${Date.now()}` }
-          }
-          
-          throw new Error(`FAL API error: ${response.status} ${response.statusText} - ${errorText}`)
-        }
-        
-      } catch (error) {
-        if (error instanceof Error && error.name === 'TimeoutError') {
-          console.log('⚠️ Lucy14b: Timeout during submission, returning fallback job ID for status polling')
-          return { kind: 'deferred', providerJobId: `lucy14b_timeout_${Date.now()}` }
-        }
-        
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-        console.error('❌ Lucy14b: Submission failed', { error: errorMsg })
-        throw new Error(`Lucy14b submission failed: ${errorMsg}`)
+        throw new Error(`FAL API error ${response.status}: ${errorText}`)
       }
 
-
+      // Step 5: Parse response
       const data = await response.json()
-      console.log('✅ Lucy14b: Async job submitted successfully', { 
+      console.log('✅ [LUCY14B-RUN] FAL job submitted successfully', {
         requestId: data.request_id,
         status: data.status,
-        responseKeys: Object.keys(data)
+        responseKeys: Object.keys(data),
+        totalTime: `${Date.now() - startTime}ms`
       })
-      
-      // Return the request_id from FAL for status checking
-      return { kind: 'deferred', providerJobId: data.request_id || `fallback_${Date.now()}` }
+
+      if (!data.request_id) {
+        console.error('❌ [LUCY14B-RUN] FAL response missing request_id', { data })
+        throw new Error('FAL API response missing request_id')
+      }
+
+      return { kind: 'deferred', providerJobId: data.request_id }
       
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      console.error('❌ Lucy14b: Async job submission failed', {
-        error: errorMsg,
-        stack: error instanceof Error ? error.stack : undefined
+      const totalTime = Date.now() - startTime
+      
+      if (error instanceof Error) {
+        if (error.name === 'TimeoutError') {
+          console.error('⏱️ [LUCY14B-RUN] Request timed out', {
+            timeoutAfter: `${totalTime}ms`,
+            maxTimeout: '25000ms'
+          })
+          throw new Error('FAL API request timed out after 25 seconds')
+        }
+        
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          console.error('🌐 [LUCY14B-RUN] Network error', {
+            error: error.message,
+            totalTime: `${totalTime}ms`
+          })
+          throw new Error('Network error connecting to FAL API')
+        }
+      }
+
+      console.error('❌ [LUCY14B-RUN] Unexpected error', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        totalTime: `${totalTime}ms`
       })
-      throw new Error(`Lucy14b async submission failed: ${errorMsg}`)
+      
+      throw error
     }
   }
 
   async result(jobId: string, input?: Lucy14bInput): Promise<ProviderStatusResult> {
-    if (!jobId || !input) {
-      return { status: 'running' }
+    const startTime = Date.now()
+    console.log('🔍 [LUCY14B-STATUS] Checking job status', { 
+      jobId,
+      timestamp: new Date().toISOString()
+    })
+
+    if (!jobId) {
+      console.error('❌ [LUCY14B-STATUS] No job ID provided')
+      return { status: 'failed', error: 'Missing job ID' }
     }
 
-    // Handle fallback/timeout jobs - try to resubmit or mark as failed
-    if (jobId.startsWith('lucy14b_fallback_') || jobId.startsWith('lucy14b_timeout_')) {
-      console.log('🔍 Lucy14b: Fallback/timeout job detected', { jobId })
-      
-      // For timeout jobs, try to resubmit once if job is recent (< 2 minutes old)
-      if (jobId.startsWith('lucy14b_timeout_') && input) {
-        const timestamp = parseInt(jobId.split('_').pop() || '0')
-        const jobAge = Date.now() - timestamp
-        
-        if (jobAge < 120000) { // Less than 2 minutes old
-          console.log('🔄 Lucy14b: Attempting resubmission for timeout job')
-          try {
-            // Try direct FAL submission without going through this.run() to avoid loops
-            const payload = {
-              image_url: input.file.signedUrl,
-              prompt: input.prompt || 'Generate smooth video from image',
-              duration: input.duration || 4,
-              enable_safety_checker: false,
-              sync: false
-            }
-
-            const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
-            const response = await fetch(`${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Key ${apiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload),
-              signal: AbortSignal.timeout(20000) // Shorter timeout for resubmission
-            })
-
-            if (response.ok) {
-              const data = await response.json()
-              if (data.request_id) {
-                console.log('✅ Lucy14b: Resubmission successful, got real job ID:', data.request_id)
-                return this.result(data.request_id, input)
-              }
-            } else {
-              console.log('❌ Lucy14b: Resubmission failed with status:', response.status)
-            }
-          } catch (error) {
-            console.log('❌ Lucy14b: Resubmission failed', error)
-          }
-        }
+    // Simple validation - real FAL job IDs should be UUIDs or similar
+    if (jobId.startsWith('lucy14b_') || jobId.startsWith('fallback_')) {
+      console.error('❌ [LUCY14B-STATUS] Invalid job ID (fallback/timeout)', { jobId })
+      return { 
+        status: 'failed', 
+        error: 'Job submission failed. Please try again.' 
       }
-      
-      // After some time, mark fallback jobs as failed
-      const timestamp = parseInt(jobId.split('_').pop() || '0')
-      const jobAge = Date.now() - timestamp
-      
-      if (jobAge > 300000) { // 5 minutes
-        console.log('⏰ Lucy14b: Fallback job timed out after 5 minutes')
-        return {
-          status: 'failed',
-          error: 'Job submission failed and could not be recovered. Please try again with a different image or simpler prompt.'
-        }
-      }
-      
-      console.log('⏳ Lucy14b: Fallback job still waiting...', { jobAge: Math.round(jobAge / 1000) + 's' })
-      return { status: 'running' } // Keep trying for a while
     }
 
     try {
       const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
-      console.log('📡 Lucy14b: Checking REAL job status with FAL API', { jobId })
-      
-      // Check job status using FAL's status endpoint
       const statusUrl = `${LUCY14B_CONFIG.api.baseUrl}/${LUCY14B_CONFIG.api.endpoint}/requests/${jobId}`
-      console.log('🔍 Calling FAL status URL:', statusUrl)
       
+      console.log('📡 [LUCY14B-STATUS] Querying FAL API', {
+        statusUrl,
+        hasApiKey: !!apiKey,
+        apiKeyPrefix: apiKey ? apiKey.substring(0, 8) + '...' : 'missing'
+      })
+
       const response = await fetch(statusUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Key ${apiKey}`,
         },
-        signal: AbortSignal.timeout(8000) // 8 seconds for status check
+        signal: AbortSignal.timeout(8000)
+      })
+
+      const responseTime = Date.now() - startTime
+      console.log('📨 [LUCY14B-STATUS] FAL status response', {
+        status: response.status,
+        statusText: response.statusText,
+        responseTime: `${responseTime}ms`
       })
 
       if (!response.ok) {
         if (response.status === 404) {
-          console.log('⏳ Lucy14b: Job not found yet, still running...')
+          console.log('⏳ [LUCY14B-STATUS] Job not found - still processing')
           return { status: 'running' }
         }
         
         const errorText = await response.text()
-        console.error('❌ Lucy14b: Status check failed', {
+        console.error('❌ [LUCY14B-STATUS] FAL API error', {
           status: response.status,
           statusText: response.statusText,
-          error: errorText,
-          url: statusUrl
+          errorBody: errorText
         })
         return { status: 'running' } // Keep trying
       }
 
       const data = await response.json()
-      console.log('📊 Lucy14b: FAL Status response', { 
-        status: data.status,
+      console.log('📊 [LUCY14B-STATUS] Job status data', {
+        falStatus: data.status,
         hasVideo: !!data.video,
-        videoUrl: data.video?.url,
-        responseKeys: Object.keys(data)
+        videoUrl: data.video?.url?.substring(0, 50) + '...',
+        responseKeys: Object.keys(data),
+        totalTime: `${Date.now() - startTime}ms`
       })
-      
-      // Check if job is completed
+
+      // Handle completed job
       if (data.status === 'COMPLETED' && data.video?.url) {
-        console.log('🎬 Lucy14b: REAL video generated successfully!', { url: data.video.url })
+        console.log('🎬 [LUCY14B-STATUS] Video generation completed!', {
+          videoUrl: data.video.url,
+          videoDuration: data.video.duration,
+          videoSize: data.video.file_size
+        })
+        
         return {
           status: 'succeeded',
           output: {
@@ -347,45 +314,53 @@ export class Lucy14bProvider implements AIProvider {
             format: 'mp4',
             width: data.video.width || 1280,
             height: data.video.height || 720,
-            duration_s: input.duration || 4,
+            duration_s: input?.duration || 4,
             provider: 'lucy14b',
             model: LUCY14B_CONFIG.api.endpoint,
-            prompt: input.prompt,
+            prompt: input?.prompt || '',
           } as Lucy14bOutput
         }
-      } else if (data.status === 'FAILED' || data.status === 'ERROR') {
-        console.error('💥 Lucy14b: Job failed', { error: data.error })
-        return {
-          status: 'failed',
-          error: data.error || 'Video generation failed'
-        }
-      } else {
-        console.log('⏳ Lucy14b: Job still running...', { status: data.status })
-        return { status: 'running' }
       }
 
-    } catch (error) {
-      console.error('❌ Lucy14b: Processing failed', error)
-      
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          return {
-            status: 'failed',
-            error: 'Video generation timed out. Please try again.'
-          }
-        }
+      // Handle failed job
+      if (data.status === 'FAILED' || data.status === 'ERROR') {
+        console.error('💥 [LUCY14B-STATUS] Job failed', {
+          falStatus: data.status,
+          error: data.error,
+          details: data.detail
+        })
+        
         return {
           status: 'failed',
-          error: error.message.includes('timeout') 
-            ? 'Video generation is taking longer than expected. Please try again with a smaller image or simpler prompt.'
-            : `Video generation failed: ${error.message}`
+          error: data.error || data.detail || 'Video generation failed'
         }
       }
+
+      // Job still running
+      console.log('⏳ [LUCY14B-STATUS] Job still processing', {
+        falStatus: data.status,
+        progress: data.progress || 'unknown'
+      })
       
-      return {
-        status: 'failed',
-        error: 'Unknown error occurred during video generation'
+      return { status: 'running' }
+
+    } catch (error) {
+      const totalTime = Date.now() - startTime
+      
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        console.error('⏱️ [LUCY14B-STATUS] Status check timed out', {
+          timeoutAfter: `${totalTime}ms`,
+          maxTimeout: '8000ms'
+        })
+        return { status: 'running' } // Keep trying
       }
+
+      console.error('❌ [LUCY14B-STATUS] Status check failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        totalTime: `${totalTime}ms`
+      })
+      
+      return { status: 'running' } // Keep trying on errors
     }
   }
 }
