@@ -80,11 +80,18 @@ Currently available providers:
 1. User uploads image → /api/upload → Supabase Storage
 2. User submits prompt → Lucy14bView → useJobCreation
 3. Job created → /api/jobs → Database + Provider.run()
-4. Provider returns → Deferred (for async processing)
+4. Provider returns → Immediate (sync mode) or Deferred (async mode)
 ```
 
 ### Job Processing Flow
 
+**Synchronous Mode (Lucy14b):**
+```
+1. Job created → Provider.run() → Full video generation (50s timeout)
+2. Video completed → Database updated → Client receives result immediately
+```
+
+**Asynchronous Mode (Other providers):**
 ```
 1. Client polls → /api/jobs/[id] → GET job status
 2. If job running → Provider.result() → Check external API

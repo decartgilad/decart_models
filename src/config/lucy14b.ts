@@ -5,8 +5,64 @@
 
 import { AIProvider, ProviderRunResult, ProviderStatusResult } from '@/lib/providers'
 
-// Simple configuration optimized for Vercel
+// FAL AI Model Configuration - fal-ai/wan/v2.2-a14b/image-to-video
 const FAL_ENDPOINT = 'https://fal.run/fal-ai/wan/v2.2-a14b/image-to-video'
+const FAL_MODEL_ID = 'fal-ai/wan/v2.2-a14b/image-to-video'
+
+// Vercel-compatible timeout helper
+function createTimeoutSignal(ms: number): AbortSignal {
+  // Check if we're in Edge Runtime
+  const isEdgeRuntime = typeof globalThis !== 'undefined' && 'EdgeRuntime' in globalThis
+  
+  if (!isEdgeRuntime && typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+    return AbortSignal.timeout(ms)
+  }
+  
+  // Fallback for Edge environments and older Node versions
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => {
+    controller.abort()
+  }, ms)
+  
+  // Clean up timeout if signal is used
+  const originalSignal = controller.signal
+  const cleanup = () => clearTimeout(timeoutId)
+  originalSignal.addEventListener('abort', cleanup, { once: true })
+  
+  return originalSignal
+}
+
+// Vercel-optimized retry mechanism with shorter timeouts
+async function postWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
+  let lastErr: any
+  
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, init)
+      
+      // Only retry on server errors and rate limits
+      if ((res.status >= 500 || res.status === 429) && i < attempts - 1) {
+        // Shorter backoff for Vercel's timeout constraints
+        const wait = Math.min(1000, 100 * Math.pow(2, i))
+        console.log(`[${new Date().toISOString()}] Retrying after ${wait}ms (${res.status}, attempt ${i + 1}/${attempts})`)
+        await new Promise(r => setTimeout(r, wait))
+        continue
+      }
+      
+      return res
+    } catch (e) {
+      lastErr = e
+      if (i < attempts - 1) {
+        const wait = Math.min(1000, 100 * Math.pow(2, i))
+        console.log(`[${new Date().toISOString()}] Network retry after ${wait}ms (attempt ${i + 1}/${attempts})`)
+        await new Promise(r => setTimeout(r, wait))
+      }
+    }
+  }
+  
+  if (lastErr) throw lastErr
+  throw new Error('Request failed after retries')
+}
 
 // Types
 export interface Lucy14bInput {
@@ -31,19 +87,93 @@ export interface Lucy14bOutput {
   duration_s: number
   provider: string
   model: string
+  prompt?: string
 }
 
-// Simple validation
-function isValidInput(input: any): boolean {
-  return input?.modelCode === 'Lucy14b' && 
-         input?.file?.signedUrl &&
-         input?.file?.size < 10 * 1024 * 1024 // 10MB max
+// Comprehensive validation with type guard
+function isValidInput(input: any): input is Lucy14bInput {
+  if (!input || input.modelCode !== 'Lucy14b') {
+    return false
+  }
+  
+  const f = input.file
+  if (!f || !f.signedUrl || typeof f.size !== 'number') {
+    return false
+  }
+  
+  // File size validation (10MB max)
+  if (f.size <= 0 || f.size > 10 * 1024 * 1024) {
+    return false
+  }
+  
+  // MIME type validation
+  const allowedMimeTypes = new Set([
+    'image/jpeg',
+    'image/jpg', 
+    'image/png',
+    'image/webp'
+  ])
+  if (!allowedMimeTypes.has(f.mime)) {
+    return false
+  }
+  
+  // Duration validation (1-10 seconds)
+  if (input.duration != null) {
+    const d = Number(input.duration)
+    if (!Number.isFinite(d) || d < 1 || d > 10) {
+      return false
+    }
+  }
+  
+  return true
 }
 
-// Environment check
+// User-friendly error messages
+function getValidationError(input: any): string {
+  if (!input || input.modelCode !== 'Lucy14b') {
+    return 'Invalid model code - expected Lucy14b'
+  }
+  
+  const f = input.file
+  if (!f || !f.signedUrl) {
+    return 'Missing or invalid image file'
+  }
+  
+  if (typeof f.size !== 'number' || f.size <= 0) {
+    return 'Invalid file size'
+  }
+  
+  if (f.size > 10 * 1024 * 1024) {
+    return 'File too large - maximum 10MB allowed'
+  }
+  
+  const allowedMimeTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])
+  if (!allowedMimeTypes.has(f.mime)) {
+    return `Unsupported image format: ${f.mime}. Allowed: JPEG, PNG, WebP`
+  }
+  
+  if (input.duration != null) {
+    const d = Number(input.duration)
+    if (!Number.isFinite(d) || d < 1 || d > 10) {
+      return 'Duration must be between 1 and 10 seconds'
+    }
+  }
+  
+  return 'Unknown validation error'
+}
+
+// Vercel environment check with detailed logging
 export function isConfigured(): boolean {
   const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
-  return !!apiKey
+  const isConfigured = !!apiKey
+  
+  if (!isConfigured) {
+    console.error('[Lucy14b] FAL API key not found in environment variables')
+    console.error('[Lucy14b] Expected: FAL_API_KEY or FAL_KEY')
+    console.error('[Lucy14b] Available env vars:', Object.keys(process.env).filter(k => k.includes('FAL')).join(', ') || 'none')
+  }
+  
+  return isConfigured
 }
 
 // Vercel-optimized Provider Implementation
@@ -52,25 +182,32 @@ export class Lucy14bProvider implements AIProvider {
 
   async run(input: Lucy14bInput): Promise<ProviderRunResult> {
     const startTime = Date.now()
-    console.log('🚀 Lucy14b: Quick async job submission', { 
-      prompt: input.prompt,
-      fileSize: input.file?.size 
+    console.log(`[${new Date().toISOString()}] Lucy14b: Starting async video generation`, { 
+      prompt: input.prompt?.substring(0, 100),
+      fileSize: input.file?.size,
+      duration: input.duration,
+      endpoint: FAL_ENDPOINT.split('/').pop() // Only log model name for security
     })
 
-    // Quick validation
+    // Configuration validation
     if (!isConfigured()) {
-      throw new Error('FAL API key not configured')
+      throw new Error('FAL API key not configured - check environment variables')
     }
 
+    // Input validation with specific error messages
     if (!isValidInput(input)) {
-      throw new Error('Invalid input - check file and model code')
+      const errorMsg = getValidationError(input)
+      console.error(`[${new Date().toISOString()}] Lucy14b validation failed:`, errorMsg)
+      throw new Error(errorMsg)
     }
 
     const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
 
     try {
-      // FAST async submission with strict timeout
-      const response = await fetch(FAL_ENDPOINT, {
+      console.log(`[${new Date().toISOString()}] Submitting video generation to FAL API...`)
+      
+      // Direct video generation with retry mechanism
+      const response = await postWithRetry(FAL_ENDPOINT, {
         method: 'POST',
         headers: {
           'Authorization': `Key ${apiKey}`,
@@ -79,61 +216,112 @@ export class Lucy14bProvider implements AIProvider {
         body: JSON.stringify({
           image_url: input.file.signedUrl,
           prompt: input.prompt || 'Create a smooth video animation',
-          duration: input.duration || 4,
+          // Convert duration to num_frames (duration * fps)
+          num_frames: Math.min(121, Math.max(17, (input.duration || 4) * 16)),
+          frames_per_second: 16,
+          resolution: '720p',
+          aspect_ratio: 'auto',
           enable_safety_checker: false,
-          sync: true // FAL doesn't work truly async - use sync mode
+          acceleration: 'regular',
+          video_quality: 'high'
+          // No sync parameter - FAL handles this automatically
         }),
-        signal: AbortSignal.timeout(50000) // 50 seconds for full video generation
+        signal: createTimeoutSignal(90000) // 90 seconds for full video generation
       })
 
       const submitTime = Date.now() - startTime
-      console.log(`⚡ FAL response in ${submitTime}ms`)
+      console.log(`[${new Date().toISOString()}] FAL API response received: ${submitTime}ms`)
+      
+      // Log response details (structured for Vercel logs)
+      console.log(`[${new Date().toISOString()}] FAL API Response:`, {
+        status: response.status,
+        statusText: response.statusText,
+        contentType: response.headers.get('content-type'),
+        requestId: response.headers.get('x-request-id')
+      })
 
       if (!response.ok) {
         const error = await response.text()
-        console.error('❌ FAL async submission failed:', response.status, error)
-        throw new Error(`FAL API failed: ${response.status} - ${error}`)
-      }
-
-      const result = await response.json()
-      console.log('✅ FAL sync generation completed:', {
-        hasVideo: !!result.video?.url,
-        videoUrl: result.video?.url?.substring(0, 50) + '...',
-        totalTime: `${Date.now() - startTime}ms`
-      })
-
-      // In sync mode, we get the video directly
-      if (result.video?.url) {
-        return {
-          kind: 'immediate',
-          output: {
-            type: 'video',
-            url: result.video.url,
-            format: 'mp4',
-            width: result.video.width || 1280,
-            height: result.video.height || 720,
-            duration_s: input.duration || 4,
-            provider: 'lucy14b',
-            model: 'fal-ai/wan/v2.2-a14b/image-to-video',
-            prompt: input.prompt || '',
-          } as Lucy14bOutput
+        const errorDetails = {
+          status: response.status,
+          statusText: response.statusText,
+          errorBody: error,
+          headers: Object.fromEntries(response.headers.entries())
+        }
+        console.error(`[${new Date().toISOString()}] FAL async submission failed:`, errorDetails)
+        
+        // User-friendly error messages
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Authentication failed - please check your FAL API key')
+        } else if (response.status === 422) {
+          throw new Error(`Invalid request: ${error}`)
+        } else if (response.status === 429) {
+          throw new Error('Rate limit exceeded - please try again later')
+        } else if (response.status >= 500) {
+          throw new Error('FAL service temporarily unavailable - please try again')
+        } else {
+          throw new Error(`Request failed with status ${response.status}: ${error}`)
         }
       }
 
-      console.error('❌ FAL sync mode missing video:', result)
-      throw new Error('FAL sync generation failed - no video returned')
+      const result = await response.json()
+      // Log structured response for Vercel analytics
+      const totalTime = Date.now() - startTime
+      console.log(`[${new Date().toISOString()}] FAL video generation completed:`, {
+        hasVideo: !!result.video?.url,
+        videoUrl: result.video?.url?.substring(0, 50) + '...',
+        prompt: result.prompt?.substring(0, 50),
+        seed: result.seed,
+        totalTime: `${totalTime}ms`
+      })
+
+      // Validate video generation response
+      if (!result.video?.url) {
+        console.error(`[${new Date().toISOString()}] FAL API missing video:`, {
+          responseKeys: Object.keys(result),
+          hasVideo: !!result.video,
+          videoKeys: result.video ? Object.keys(result.video) : []
+        })
+        throw new Error('FAL API did not return video - generation failed')
+      }
+
+      console.log(`[${new Date().toISOString()}] Video generation completed successfully`)
+      return {
+        kind: 'immediate',
+        output: {
+          type: 'video',
+          url: result.video.url,
+          format: 'mp4',
+          width: 1280, // FAL returns 720p by default
+          height: 720,
+          duration_s: input.duration || 4,
+          provider: 'lucy14b',
+          model: FAL_MODEL_ID,
+          prompt: result.prompt || input.prompt || '',
+        } as Lucy14bOutput
+      }
 
     } catch (error) {
       const totalTime = Date.now() - startTime
       
       if (error instanceof Error && error.name === 'TimeoutError') {
-        console.error(`⏱️ FAL sync generation timed out after ${totalTime}ms`)
-        throw new Error('Video generation took too long (>50 seconds)')
+        console.error(`[${new Date().toISOString()}] FAL video generation timeout:`, {
+          timeoutAfter: `${totalTime}ms`,
+          maxTimeout: '90 seconds',
+          suggestion: 'Video generation took longer than expected'
+        })
+        throw new Error('Video generation took too long (>90 seconds). This may happen with complex prompts or when the service is busy. Please try a shorter duration or simpler prompt.')
       }
 
-      console.error('❌ Lucy14b sync generation failed:', {
+      console.error(`[${new Date().toISOString()}] Lucy14b video generation failed:`, {
         error: error instanceof Error ? error.message : 'Unknown error',
-        totalTime: `${totalTime}ms`
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        totalTime: `${totalTime}ms`,
+        input: {
+          promptLength: input.prompt?.length || 0,
+          duration: input.duration,
+          fileSize: input.file?.size
+        }
       })
       throw error
     }
@@ -145,7 +333,11 @@ export class Lucy14bProvider implements AIProvider {
     }
 
     const startTime = Date.now()
-    console.log('🔍 Lucy14b: Fast status check for:', jobId)
+    console.log('🔍 Lucy14b: Checking job status', {
+      jobId: jobId,
+      statusUrl: `${FAL_ENDPOINT}/requests/${jobId}`,
+      timestamp: new Date().toISOString()
+    })
 
     const apiKey = process.env.FAL_API_KEY || process.env.FAL_KEY
     const statusUrl = `${FAL_ENDPOINT}/requests/${jobId}`
@@ -161,18 +353,44 @@ export class Lucy14bProvider implements AIProvider {
 
       const checkTime = Date.now() - startTime
       
+      // Log response details
+      console.log('📊 Status check response:', {
+        status: response.status,
+        statusText: response.statusText,
+        checkTime: `${checkTime}ms`,
+        headers: {
+          'content-type': response.headers.get('content-type'),
+          'x-request-id': response.headers.get('x-request-id')
+        }
+      })
+      
       if (response.status === 404) {
-        console.log(`⏳ Job queued/processing (${checkTime}ms)`)
+        console.log(`⏳ Job still queued/processing (${checkTime}ms) - this is normal for new jobs`)
         return { status: 'running' }
       }
 
       if (!response.ok) {
-        console.error(`❌ FAL status error ${response.status} (${checkTime}ms)`)
+        const errorText = await response.text()
+        console.error(`❌ FAL status check failed (${checkTime}ms):`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorBody: errorText,
+          jobId: jobId
+        })
         return { status: 'running' } // Keep trying
       }
 
       const data = await response.json()
-      console.log(`📊 Job status: ${data.status} (${checkTime}ms)`)
+      
+      // Log detailed status information
+      console.log('📋 Job status details:', {
+        status: data.status,
+        progress: data.progress,
+        checkTime: `${checkTime}ms`,
+        hasVideo: !!data.video?.url,
+        hasError: !!data.error,
+        responseKeys: Object.keys(data)
+      })
 
       // Video is ready!
       if (data.status === 'COMPLETED' && data.video?.url) {
@@ -200,14 +418,16 @@ export class Lucy14bProvider implements AIProvider {
 
       // Job failed
       if (data.status === 'FAILED' || data.status === 'ERROR') {
-        console.error('💥 Job failed:', {
+        console.error('💥 Job failed with detailed info:', {
           status: data.status,
           error: data.error,
-          checkTime: `${checkTime}ms`
+          checkTime: `${checkTime}ms`,
+          jobId: jobId,
+          fullResponse: data
         })
         return {
           status: 'failed',
-          error: data.error || 'Video generation failed'
+          error: data.error || `Video generation failed with status: ${data.status}`
         }
       }
 
@@ -220,11 +440,20 @@ export class Lucy14bProvider implements AIProvider {
       const checkTime = Date.now() - startTime
       
       if (error instanceof Error && error.name === 'TimeoutError') {
-        console.error(`⏱️ Status check timeout (${checkTime}ms)`)
+        console.error(`⏱️ Status check timeout (${checkTime}ms):`, {
+          jobId: jobId,
+          timeout: '8 seconds',
+          suggestion: 'FAL API may be slow to respond'
+        })
         return { status: 'running' } // Keep trying
       }
 
-      console.error(`❌ Status check error (${checkTime}ms):`, error)
+      console.error(`❌ Status check error (${checkTime}ms):`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        jobId: jobId,
+        statusUrl: `${FAL_ENDPOINT}/requests/${jobId}`
+      })
       return { status: 'running' } // Keep trying
     }
   }
