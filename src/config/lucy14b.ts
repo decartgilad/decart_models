@@ -227,7 +227,7 @@ export class Lucy14bProvider implements AIProvider {
           video_quality: 'high',
           sync: false // Force async mode for Vercel
         }),
-        signal: createTimeoutSignal(15000) // 15 seconds for async submission (Vercel safe)
+        signal: createTimeoutSignal(25000) // 25 seconds for async submission
       })
 
       const submitTime = Date.now() - startTime
@@ -314,7 +314,7 @@ export class Lucy14bProvider implements AIProvider {
       if (error instanceof Error && error.name === 'TimeoutError') {
         console.error(`[${new Date().toISOString()}] FAL async submission timeout:`, {
           timeoutAfter: `${totalTime}ms`,
-          maxTimeout: '15 seconds',
+          maxTimeout: '25 seconds',
           suggestion: 'FAL API may be overloaded or not responding'
         })
         throw new Error('FAL API submission timeout - service may be overloaded. Please try again in a few minutes.')
