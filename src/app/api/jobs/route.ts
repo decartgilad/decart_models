@@ -10,6 +10,9 @@ import {
 import { JOB_STATUS } from '@/lib/server/constants'
 import { getProvider, DEFAULT_PROVIDER, logProviderOperation } from '@/lib/providers'
 
+// Use Edge Runtime for longer timeouts (up to 30 seconds)
+export const runtime = 'edge'
+
 export async function POST(request: NextRequest) {
   const requestId = generateRequestId()
   const method = 'POST'
