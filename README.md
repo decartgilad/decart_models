@@ -20,7 +20,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## Development Tools
 
-- **Design System**: [http://localhost:3000/design-system](http://localhost:3000/design-system) - Visual reference for all UI components (development only)
+- **Design System**: [http://localhost:3000/design-system](http://localhost:3000/design-system) - Visual reference for all UI components
 
 ## Documentation
 

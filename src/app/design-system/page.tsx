@@ -6,10 +6,7 @@ import { DecartLogo } from '@/components/DecartLogo'
 import { notFound } from 'next/navigation'
 
 export default function DesignSystemPage() {
-  // Guard behind development environment
-  if (process.env.NODE_ENV !== 'development') {
-    notFound()
-  }
+  // Design system is now available in all environments
   return (
     <div className="min-h-screen bg-bg">
       {/* Top Bar */}

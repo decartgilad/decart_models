@@ -31,6 +31,7 @@ This is a Next.js-based AI model platform for image-to-video generation and real
 4. **Open in browser:**
    - Main app: http://localhost:3000
    - Splice demo: http://localhost:3000/splice
+   - Design system: http://localhost:3000/design-system
    - API health: http://localhost:3000/api/ping
 
 ## 📁 Project Structure
