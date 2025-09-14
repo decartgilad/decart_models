@@ -20,7 +20,7 @@ export default function SpliceView({ model }: ModelViewProps) {
   // Combined error from all sources
   const error = fileUpload.error || jobCreation.error
 
-  const handlePromptSubmit = React.useCallback(async (prompt: string, file: File) => {
+  const handlePromptSubmit = React.useCallback(async (prompt: string, uploadResult: any) => {
     // Prevent duplicate job creation
     if (jobCreation.isCreating || isUploading) {
       console.warn('Job already in progress, ignoring duplicate request')
@@ -29,31 +29,14 @@ export default function SpliceView({ model }: ModelViewProps) {
 
     try {
       setIsUploading(true)
-      console.log('📤 Starting file upload...', { name: file.name, size: file.size })
+      console.log('📤 Using existing upload result:', uploadResult)
       
-      // Actually upload the file to the server
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.statusText}`)
-      }
-
-      const uploadResult = await uploadResponse.json()
-      console.log('✅ File uploaded successfully:', uploadResult)
-      
-      // Set the real upload result
+      // Set the upload result (already uploaded by VideoUploadTile)
       fileUpload.setUploadResult(uploadResult)
       
-      // Create job with real uploaded file and Splice-specific parameters
+      // Create job with the uploaded file and Splice-specific parameters
       const spliceInput = {
         ...uploadResult,
-        originalName: file.name, // Add original filename for format validation
         enhance_prompt: true, // Default to enhanced prompts
         // orientation will be auto-detected by the provider - don't override it
       }
@@ -61,7 +44,7 @@ export default function SpliceView({ model }: ModelViewProps) {
       jobCreation.createJobWithModel(spliceInput, prompt)
       
     } catch (error) {
-      console.error('❌ Upload failed:', error)
+      console.error('❌ Job creation failed:', error)
       fileUpload.setUploadResult(null)
       // You might want to show an error to the user here
     } finally {
