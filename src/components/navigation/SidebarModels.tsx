@@ -43,6 +43,15 @@ export function SidebarModels() {
           <h3 className="text-xl text-subfg mb-md font-sans leading-snug">Features</h3>
           <div className="space-y-sm">
             <FeatureCard
+              title="Splice Landing Page"
+              subtitle="Learn about Splice video transformations"
+              comingSoon={false}
+              onClick={() => {
+                router.push('/splice')
+              }}
+            />
+
+            <FeatureCard
               title="Quick Image to Live"
               subtitle="Fast multi image to video no prompt"
               comingSoon={true}
